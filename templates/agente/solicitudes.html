@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Solicitudes de mi zona — AndesLink{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-6">
+  <a href="{% url 'agente:dashboard' %}" class="text-sm text-andes-700 hover:underline mb-4 inline-block">← Volver</a>
+  <h1 class="text-xl font-bold mb-5">Solicitudes de mi zona</h1>
+
+  {% if solicitudes %}
+  <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-gray-600 text-xs uppercase">
+        <tr>
+          <th class="px-4 py-3 text-left">Comprador</th>
+          <th class="px-4 py-3 text-left">Producto</th>
+          <th class="px-4 py-3 text-left hidden md:table-cell">Productor</th>
+          <th class="px-4 py-3 text-left hidden md:table-cell">Cantidad</th>
+          <th class="px-4 py-3 text-left">Estado</th>
+          <th class="px-4 py-3 text-left hidden md:table-cell">Fecha</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for s in solicitudes %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-3 font-medium">{{ s.comprador.get_full_name }}</td>
+          <td class="px-4 py-3 text-gray-600">{{ s.producto.nombre }}</td>
+          <td class="px-4 py-3 text-gray-500 hidden md:table-cell">{{ s.producto.productor.get_full_name }}</td>
+          <td class="px-4 py-3 text-gray-500 hidden md:table-cell">
+            {{ s.cantidad_requerida }} {{ s.producto.get_unidad_display }}
+          </td>
+          <td class="px-4 py-3">
+            <span class="px-2 py-1 rounded-full text-xs font-medium
+              {% if s.estado == 'PENDIENTE' %}bg-yellow-100 text-yellow-700
+              {% elif s.estado == 'VISTO' %}bg-blue-100 text-blue-700
+              {% else %}bg-green-100 text-green-700{% endif %}">
+              {{ s.get_estado_display }}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-gray-400 text-xs hidden md:table-cell">{{ s.creado_en|date:"d/m/Y" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="text-center py-12 text-gray-400">
+    <p class="text-4xl mb-2">📭</p>
+    <p>No hay solicitudes en tu zona aún.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

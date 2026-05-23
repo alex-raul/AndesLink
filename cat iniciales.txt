@@ -1,0 +1,13 @@
+3. Cargar las categorías iniciales
+bashpython manage.py shell
+Dentro del shell pega esto:
+pythonfrom marketplace.models import Categoria
+categorias = [
+    ('Papa', '🥔'), ('Quinua', '🌾'), ('Cañihua', '🌿'),
+    ('Tarwi', '🫘'), ('Maíz', '🌽'), ('Orégano', '🍃'),
+    ('Derivados', '📦'), ('Otros', '🛒'),
+]
+for nombre, icono in categorias:
+    Categoria.objects.get_or_create(nombre=nombre, defaults={'icono': icono})
+print("Categorías creadas ✓")
+exit()

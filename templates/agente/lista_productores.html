@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Productores — AndesLink{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-6">
+  <a href="{% url 'agente:dashboard' %}" class="text-sm text-andes-700 hover:underline mb-4 inline-block">← Volver</a>
+  <h1 class="text-xl font-bold mb-5">Productores registrados</h1>
+
+  {% if productores %}
+  <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-gray-600 text-xs uppercase">
+        <tr>
+          <th class="px-4 py-3 text-left">Productor</th>
+          <th class="px-4 py-3 text-left hidden md:table-cell">Departamento</th>
+          <th class="px-4 py-3 text-left hidden md:table-cell">Teléfono</th>
+          <th class="px-4 py-3 text-left">Acción</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for p in productores %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-3 font-medium">{{ p.get_full_name }}</td>
+          <td class="px-4 py-3 text-gray-500 hidden md:table-cell">{{ p.departamento|default:"—" }}</td>
+          <td class="px-4 py-3 text-gray-500 hidden md:table-cell">{{ p.telefono|default:"—" }}</td>
+          <td class="px-4 py-3">
+            {% if p.pk in mis_ids %}
+              <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">✓ Asignado</span>
+            {% else %}
+              <a href="{% url 'agente:asignar' p.pk %}"
+                 class="text-xs bg-andes-700 text-white px-3 py-1 rounded-full hover:bg-andes-900 transition">
+                Asignar
+              </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="text-gray-400 text-center py-10">No hay productores registrados aún.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Panel Agente — AndesLink{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-6">
+  <div class="flex items-center justify-between mb-5">
+    <div>
+      <h1 class="text-xl font-bold">Panel Agente Andino 🧭</h1>
+      <p class="text-sm text-gray-500">{{ user.get_full_name }} · {{ user.departamento }}</p>
+    </div>
+    <a href="{% url 'agente:lista_productores' %}"
+       class="bg-andes-700 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-andes-900 transition">
+      + Asignar productor
+    </a>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-3 gap-3 mb-6">
+    <div class="bg-white border border-gray-200 rounded-xl p-4 text-center">
+      <p class="text-2xl font-bold text-andes-700">{{ stats.productores }}</p>
+      <p class="text-xs text-gray-500">Productores a cargo</p>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-xl p-4 text-center">
+      <p class="text-2xl font-bold text-green-600">{{ stats.productos_activos }}</p>
+      <p class="text-xs text-gray-500">Productos activos</p>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-xl p-4 text-center">
+      <p class="text-2xl font-bold text-yellow-500">{{ stats.solicitudes_pendientes }}</p>
+      <p class="text-xs text-gray-500">Solicitudes pendientes</p>
+    </div>
+  </div>
+
+  <!-- Solicitudes pendientes -->
+  {% if solicitudes_pendientes %}
+  <div class="mb-6">
+    <h2 class="text-base font-semibold mb-3">⚠️ Solicitudes que requieren atención</h2>
+    <div class="bg-white rounded-2xl border border-yellow-200 overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-yellow-50 text-gray-600 text-xs uppercase">
+          <tr>
+            <th class="px-4 py-3 text-left">Comprador</th>
+            <th class="px-4 py-3 text-left">Producto</th>
+            <th class="px-4 py-3 text-left hidden md:table-cell">Productor</th>
+            <th class="px-4 py-3 text-left hidden md:table-cell">Fecha</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for s in solicitudes_pendientes %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 font-medium">{{ s.comprador.get_full_name }}</td>
+            <td class="px-4 py-3 text-gray-600">{{ s.producto.nombre }}</td>
+            <td class="px-4 py-3 text-gray-500 hidden md:table-cell">{{ s.producto.productor.get_full_name }}</td>
+            <td class="px-4 py-3 text-gray-400 text-xs hidden md:table-cell">{{ s.creado_en|date:"d/m/Y" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <a href="{% url 'agente:solicitudes' %}" class="text-xs text-andes-700 hover:underline mt-2 inline-block">
+      Ver todas las solicitudes →
+    </a>
+  </div>
+  {% endif %}
+
+  <!-- Mis productores -->
+  <h2 class="text-base font-semibold mb-3">👨‍🌾 Mis productores</h2>
+  {% if asignaciones %}
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    {% for a in asignaciones %}
+    <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-3">
+      <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-lg">👤</div>
+      <div>
+        <p class="font-medium text-sm">{{ a.productor.get_full_name }}</p>
+        <p class="text-xs text-gray-500">📍 {{ a.productor.departamento }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-10 text-gray-400">
+    <p class="text-4xl mb-2">🗺️</p>
+    <p class="text-sm">Aún no tienes productores asignados</p>
+    <a href="{% url 'agente:lista_productores' %}" class="text-andes-700 text-sm hover:underline mt-1 inline-block">
+      Buscar productores →
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

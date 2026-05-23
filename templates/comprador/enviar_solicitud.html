@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Contactar productor — AndesLink{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto px-4 py-6">
+  <a href="{% url 'marketplace:detalle' producto.pk %}" class="text-sm text-andes-700 hover:underline mb-4 inline-block">
+    ← Volver al producto
+  </a>
+
+  <div class="bg-white rounded-2xl border border-gray-200 p-6">
+    <!-- Resumen del producto -->
+    <div class="flex gap-3 mb-5 p-3 bg-green-50 rounded-xl">
+      {% if producto.imagen %}
+        <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}"
+             class="w-16 h-16 object-cover rounded-lg flex-shrink-0">
+      {% else %}
+        <div class="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center text-2xl flex-shrink-0">🌿</div>
+      {% endif %}
+      <div>
+        <p class="font-semibold text-sm">{{ producto.nombre }}</p>
+        <p class="text-xs text-gray-500">{{ producto.productor.get_full_name }}</p>
+        <p class="text-xs text-andes-700 font-medium mt-1">S/ {{ producto.precio_unitario }} / {{ producto.get_unidad_display }}</p>
+      </div>
+    </div>
+
+    <h1 class="text-lg font-bold mb-4">Enviar solicitud al productor</h1>
+
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      {% for field in form %}
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ field.label }}</label>
+        <div class="[&>input]:w-full [&>input]:border [&>input]:border-gray-300 [&>input]:rounded-lg [&>input]:px-3 [&>input]:py-2 [&>input]:text-sm
+                    [&>textarea]:w-full [&>textarea]:border [&>textarea]:border-gray-300 [&>textarea]:rounded-lg [&>textarea]:px-3 [&>textarea]:py-2 [&>textarea]:text-sm">
+          {{ field }}
+        </div>
+        {% if field.errors %}
+          <p class="text-xs text-red-600 mt-1">{{ field.errors.0 }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <button type="submit"
+              class="w-full bg-andes-700 text-white py-2.5 rounded-xl font-semibold hover:bg-andes-900 transition">
+        Enviar solicitud
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
