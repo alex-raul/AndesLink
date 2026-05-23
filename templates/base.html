@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}AndesLink{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            andes: { 50:'#f0fdf4', 500:'#22c55e', 700:'#15803d', 900:'#14532d' }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+
+  <!-- Navbar -->
+  <nav class="bg-andes-700 text-white shadow-md sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="/" class="text-xl font-bold tracking-tight">
+        🌿 AndesLink
+      </a>
+      <!-- Menú desktop -->
+      <div class="hidden md:flex items-center gap-6 text-sm font-medium">
+        <a href="/" class="hover:text-green-200 transition">Marketplace</a>
+        {% if user.is_authenticated %}
+          {% if user.es_productor %}
+            <a href="{% url 'productor:dashboard' %}" class="hover:text-green-200">Mi panel</a>
+          {% endif %}
+          <span class="text-green-300">{{ user.get_full_name }}</span>
+          <a href="{% url 'accounts:logout' %}" class="bg-white text-andes-700 px-3 py-1 rounded-full text-xs font-semibold hover:bg-green-100">Salir</a>
+        {% else %}
+          <a href="{% url 'accounts:login' %}" class="hover:text-green-200">Ingresar</a>
+          <a href="{% url 'accounts:registro' %}" class="bg-white text-andes-700 px-3 py-1 rounded-full text-xs font-semibold hover:bg-green-100">Registrarse</a>
+        {% endif %}
+      </div>
+      <!-- Menú móvil (hamburguesa simple) -->
+      <button id="menu-btn" class="md:hidden text-white focus:outline-none text-2xl">☰</button>
+    </div>
+    <!-- Dropdown móvil -->
+    <div id="mobile-menu" class="hidden md:hidden bg-andes-900 px-4 pb-3 text-sm font-medium space-y-2">
+      <a href="/" class="block py-1 hover:text-green-300">Marketplace</a>
+      {% if user.is_authenticated %}
+        {% if user.es_productor %}
+          <a href="{% url 'productor:dashboard' %}" class="block py-1 hover:text-green-300">Mi panel</a>
+        {% endif %}
+        <a href="{% url 'accounts:logout' %}" class="block py-1 hover:text-green-300">Salir</a>
+      {% else %}
+        <a href="{% url 'accounts:login' %}" class="block py-1 hover:text-green-300">Ingresar</a>
+        <a href="{% url 'accounts:registro' %}" class="block py-1 hover:text-green-300">Registrarse</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <!-- Mensajes flash -->
+  {% if messages %}
+  <div class="max-w-6xl mx-auto px-4 pt-3">
+    {% for msg in messages %}
+      <div class="p-3 mb-2 rounded-lg text-sm font-medium
+        {% if msg.tags == 'success' %}bg-green-100 text-green-800
+        {% elif msg.tags == 'error' %}bg-red-100 text-red-800
+        {% else %}bg-blue-100 text-blue-800{% endif %}">
+        {{ msg }}
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Contenido principal -->
+  <main class="flex-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="bg-andes-900 text-green-300 text-center py-4 text-xs mt-8">
+    AndesLink © 2025 — Conectando productores altoandinos con el mundo
+  </footer>
+
+  <script>
+    document.getElementById('menu-btn').addEventListener('click', () => {
+      document.getElementById('mobile-menu').classList.toggle('hidden');
+    });
+  </script>
+</body>
+</html>

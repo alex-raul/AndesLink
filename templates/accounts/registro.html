@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Registro — AndesLink{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto px-4 py-8">
+  <div class="bg-white rounded-2xl border border-gray-200 p-6">
+    <h1 class="text-xl font-bold mb-1">Crear cuenta</h1>
+    <p class="text-sm text-gray-500 mb-5">Únete a la red de productores andinos</p>
+
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      {% for field in form %}
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ field.label }}</label>
+        <div class="[&>input]:w-full [&>input]:border [&>input]:border-gray-300 [&>input]:rounded-lg [&>input]:px-3 [&>input]:py-2 [&>input]:text-sm
+                    [&>select]:w-full [&>select]:border [&>select]:border-gray-300 [&>select]:rounded-lg [&>select]:px-3 [&>select]:py-2 [&>select]:text-sm">
+          {{ field }}
+        </div>
+        {% if field.errors %}
+          <p class="text-xs text-red-600 mt-1">{{ field.errors.0 }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <button type="submit" class="w-full bg-andes-700 text-white py-2.5 rounded-xl font-semibold hover:bg-andes-900 transition">
+        Registrarme
+      </button>
+    </form>
+    <p class="text-center text-sm text-gray-500 mt-4">
+      ¿Ya tienes cuenta? <a href="{% url 'accounts:login' %}" class="text-andes-700 font-medium hover:underline">Inicia sesión</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Mi panel — AndesLink{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-6">
+  <div class="flex items-center justify-between mb-5">
+    <div>
+      <h1 class="text-xl font-bold">Hola, {{ user.first_name }} 👋</h1>
+      <p class="text-sm text-gray-500">Panel de productor</p>
+    </div>
+    <a href="{% url 'productor:agregar' %}"
+       class="bg-andes-700 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-andes-900 transition">
+      + Publicar producto
+    </a>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-3 gap-3 mb-6">
+    <div class="bg-white border border-gray-200 rounded-xl p-4 text-center">
+      <p class="text-2xl font-bold text-andes-700">{{ stats.total }}</p>
+      <p class="text-xs text-gray-500">Total publicados</p>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-xl p-4 text-center">
+      <p class="text-2xl font-bold text-green-600">{{ stats.disponibles }}</p>
+      <p class="text-xs text-gray-500">Disponibles</p>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-xl p-4 text-center">
+      <p class="text-2xl font-bold text-gray-600">{{ stats.vendidos }}</p>
+      <p class="text-xs text-gray-500">Vendidos</p>
+    </div>
+  </div>
+
+  <!-- Lista de productos -->
+  {% if productos %}
+  <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-gray-600 text-xs uppercase">
+        <tr>
+          <th class="px-4 py-3 text-left">Producto</th>
+          <th class="px-4 py-3 text-left hidden md:table-cell">Cantidad</th>
+          <th class="px-4 py-3 text-left hidden md:table-cell">Precio</th>
+          <th class="px-4 py-3 text-left">Estado</th>
+          <th class="px-4 py-3 text-left">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for p in productos %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-3 font-medium">{{ p.nombre }}</td>
+          <td class="px-4 py-3 hidden md:table-cell text-gray-500">{{ p.cantidad }} {{ p.get_unidad_display }}</td>
+          <td class="px-4 py-3 hidden md:table-cell text-gray-500">S/ {{ p.precio_unitario }}</td>
+          <td class="px-4 py-3">
+            <span class="px-2 py-1 rounded-full text-xs font-medium
+              {% if p.estado == 'DISPONIBLE' %}bg-green-100 text-green-700
+              {% elif p.estado == 'RESERVADO' %}bg-yellow-100 text-yellow-700
+              {% else %}bg-gray-100 text-gray-600{% endif %}">
+              {{ p.get_estado_display }}
+            </span>
+          </td>
+          <td class="px-4 py-3 flex gap-2">
+            <a href="{% url 'productor:editar' p.pk %}" class="text-blue-600 hover:underline text-xs">Editar</a>
+            <a href="{% url 'productor:eliminar' p.pk %}" class="text-red-500 hover:underline text-xs">Eliminar</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="text-center py-12 text-gray-400">
+    <div class="text-5xl mb-3">📦</div>
+    <p class="font-medium">Aún no tienes productos publicados</p>
+    <a href="{% url 'productor:agregar' %}" class="mt-3 inline-block text-andes-700 text-sm hover:underline">
+      Publica tu primer producto →
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

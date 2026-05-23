@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}{{ accion }} producto — AndesLink{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto px-4 py-6">
+  <h1 class="text-xl font-bold mb-5">{{ accion }} producto</h1>
+  <div class="bg-white rounded-2xl border border-gray-200 p-6">
+    <form method="post" enctype="multipart/form-data" class="space-y-4">
+      {% csrf_token %}
+      {% for field in form %}
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ field.label }}</label>
+        <div class="[&>input]:w-full [&>input]:border [&>input]:border-gray-300 [&>input]:rounded-lg [&>input]:px-3 [&>input]:py-2 [&>input]:text-sm
+                    [&>select]:w-full [&>select]:border [&>select]:border-gray-300 [&>select]:rounded-lg [&>select]:px-3 [&>select]:py-2 [&>select]:text-sm
+                    [&>textarea]:w-full [&>textarea]:border [&>textarea]:border-gray-300 [&>textarea]:rounded-lg [&>textarea]:px-3 [&>textarea]:py-2 [&>textarea]:text-sm">
+          {{ field }}
+        </div>
+        {% if field.errors %}
+          <p class="text-xs text-red-600 mt-1">{{ field.errors.0 }}</p>
+        {% endif %}
+        {% if field.help_text %}
+          <p class="text-xs text-gray-400 mt-1">{{ field.help_text }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="flex-1 bg-andes-700 text-white py-2.5 rounded-xl font-semibold hover:bg-andes-900 transition">
+          {{ accion }} producto
+        </button>
+        <a href="{% url 'productor:dashboard' %}" class="flex-1 text-center border border-gray-300 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition">
+          Cancelar
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
