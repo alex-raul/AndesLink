@@ -14,6 +14,23 @@
         👨‍🌾
       </div>
     {% endif %}
+    {% if promedio %}
+    <div class="flex items-center gap-2 mt-1 mb-2">
+    <div class="flex text-yellow-400 text-lg leading-none">
+        {% for i in "12345" %}
+        {% if forloop.counter <= promedio %}
+            ★
+        {% else %}
+            ☆
+        {% endif %}
+        {% endfor %}
+    </div>
+    <span class="text-sm font-semibold text-gray-700">{{ promedio|floatformat:1 }}</span>
+    <span class="text-xs text-gray-400">({{ total_resenas }} reseña{{ total_resenas|pluralize }})</span>
+    </div>
+    {% else %}
+    <p class="text-xs text-gray-400 mt-1 mb-2">Sin calificaciones aún</p>
+    {% endif %}
     <div class="text-center sm:text-left">
       <h1 class="text-2xl font-bold">{{ productor.get_full_name }}</h1>
       <p class="text-sm text-gray-500 mt-0.5">Productor andino</p>

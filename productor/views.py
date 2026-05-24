@@ -99,7 +99,6 @@ def mis_solicitudes(request):
 @solo_productor
 def buscar_agentes(request):
     q = request.GET.get('q', '').strip()
-    agentes = []
 
     ya_asignado = ProductorAsignado.objects.filter(
         productor=request.user
@@ -116,14 +115,19 @@ def buscar_agentes(request):
         ids_con_relacion.add(rec)
     ids_con_relacion.discard(request.user.pk)
 
+    # Siempre muestra todos
+    agentes = Usuario.objects.filter(
+        rol=Usuario.Rol.AGENTE
+    ).exclude(pk__in=ids_con_relacion)
+
     if q:
-        agentes = Usuario.objects.filter(
-            rol=Usuario.Rol.AGENTE
-        ).filter(
+        agentes = agentes.filter(
             Q(first_name__icontains=q) |
             Q(last_name__icontains=q) |
             Q(departamento__icontains=q)
-        ).exclude(pk__in=ids_con_relacion)
+        )
+
+    agentes = agentes.order_by('first_name')
 
     return render(request, 'productor/buscar_agentes.html', {
         'agentes': agentes,

@@ -2,56 +2,121 @@
 {% block title %}Buscar productores — AndesLink{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto px-4 py-6">
+<div class="max-w-4xl mx-auto px-4 py-6">
   <a href="{% url 'agente:dashboard' %}"
      class="text-sm text-andes-700 hover:underline mb-4 inline-block">← Volver al panel</a>
-  <h1 class="text-xl font-bold mb-5">Buscar productores verificados</h1>
 
+  <div class="flex items-center justify-between mb-5">
+    <h1 class="text-xl font-bold">Productores disponibles</h1>
+    <span class="text-sm text-gray-400">{{ productores|length }} productor{{ productores|length|pluralize }}</span>
+  </div>
+
+  <!-- Buscador -->
   <form method="get" class="flex gap-2 mb-6">
     <input type="text" name="q" value="{{ q }}"
-           placeholder="Buscar por nombre o departamento…"
+           placeholder="Filtrar por nombre o departamento…"
            class="flex-1 border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-andes-500">
     <button type="submit"
             class="bg-andes-700 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-andes-900 transition">
-      Buscar
+      Filtrar
     </button>
+    {% if q %}
+    <a href="{% url 'agente:buscar' %}"
+       class="border border-gray-300 text-gray-500 px-4 py-2 rounded-xl text-sm hover:bg-gray-50 transition">
+      Limpiar
+    </a>
+    {% endif %}
   </form>
 
   {% if productores %}
-  <div class="space-y-3">
+  <div class="grid sm:grid-cols-2 gap-4">
     {% for p in productores %}
-    <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between gap-3">
+    <div class="bg-white rounded-2xl border border-gray-200 p-4 flex flex-col gap-3">
+
+      <!-- Cabecera del productor -->
       <div class="flex items-center gap-3">
         {% if p.foto %}
-          <img src="{{ p.foto.url }}" class="w-12 h-12 rounded-full object-cover border-2 border-green-200">
+          <img src="{{ p.foto.url }}"
+               class="w-14 h-14 rounded-full object-cover border-2 border-green-200 flex-shrink-0">
         {% else %}
-          <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-2xl border-2 border-green-200">
+          <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center text-2xl border-2 border-green-200 flex-shrink-0">
             👨‍🌾
           </div>
         {% endif %}
-        <div>
-          <p class="font-semibold">{{ p.get_full_name }}</p>
-          <p class="text-xs text-gray-400">📍 {{ p.departamento }}{% if p.provincia %}, {{ p.provincia }}{% endif %}</p>
-          <p class="text-xs text-gray-400">{{ p.productos.count }} producto{{ p.productos.count|pluralize }} publicado{{ p.productos.count|pluralize }}</p>
+        <div class="min-w-0">
+          <p class="font-bold truncate">{{ p.get_full_name }}</p>
+          <p class="text-xs text-gray-400">
+            📍 {{ p.departamento }}{% if p.provincia %}, {{ p.provincia }}{% endif %}
+          </p>
+          {% if p.telefono %}
+          <p class="text-xs text-gray-400">📞 {{ p.telefono }}</p>
+          {% endif %}
         </div>
       </div>
-      <a href="{% url 'agente:enviar_solicitud' p.pk %}"
-         class="bg-andes-700 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-andes-900 transition flex-shrink-0">
-        Enviar solicitud
-      </a>
+
+      <!-- Datos relevantes -->
+      <div class="grid grid-cols-3 gap-2 text-center">
+        <div class="bg-green-50 rounded-xl py-2">
+          <p class="text-base font-bold text-andes-700">{{ p.productos.count }}</p>
+          <p class="text-xs text-gray-400">Productos</p>
+        </div>
+        <div class="bg-green-50 rounded-xl py-2">
+          <p class="text-base font-bold text-gray-700">
+            {{ p.vendidos_count }}
+          </p>
+          <p class="text-xs text-gray-400">Vendidos</p>
+        </div>
+        <div class="bg-green-50 rounded-xl py-2">
+          <p class="text-base font-bold text-yellow-500">
+            {% if p.calificaciones_recibidas.exists %}
+              {{ p.calificaciones_recibidas.all|length }}★
+            {% else %}
+              —
+            {% endif %}
+          </p>
+          <p class="text-xs text-gray-400">Reseñas</p>
+        </div>
+      </div>
+
+      <!-- Categorías que produce -->
+      <!-- Categorías que produce -->
+        <div class="flex flex-wrap gap-1">
+            {% for cat in p.categorias_productos %}
+                <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                    {{ cat }}
+                </span>
+            {% empty %}
+                <span class="text-xs text-gray-400">
+                    Sin categorías
+                </span>
+            {% endfor %}
+        </div>
+
+
+      <!-- Botones -->
+      <div class="flex gap-2 mt-auto">
+        <a href="{% url 'accounts:perfil_productor' p.pk %}"
+           class="flex-1 text-center border border-gray-200 text-gray-600 py-2 rounded-xl text-xs font-medium hover:bg-gray-50 transition">
+          Ver perfil
+        </a>
+        <a href="{% url 'agente:enviar_solicitud' p.pk %}"
+           class="flex-1 text-center bg-andes-700 text-white py-2 rounded-xl text-xs font-semibold hover:bg-andes-900 transition">
+          Enviar solicitud
+        </a>
+      </div>
+
     </div>
     {% endfor %}
   </div>
-  {% elif q %}
-  <div class="text-center py-12 text-gray-400">
-    <div class="text-4xl mb-2">🔍</div>
-    <p>No se encontraron productores para "<strong>{{ q }}</strong>"</p>
-  </div>
+
   {% else %}
-  <div class="text-center py-12 text-gray-400">
-    <div class="text-4xl mb-2">🌾</div>
-    <p>Escribe un nombre o departamento para buscar</p>
+  <div class="text-center py-14 text-gray-400">
+    <div class="text-5xl mb-3">🌾</div>
+    <p class="font-medium">
+      {% if q %}No hay productores para "{{ q }}"{% else %}No hay productores disponibles{% endif %}
+    </p>
   </div>
   {% endif %}
+
 </div>
 {% endblock %}

@@ -53,13 +53,22 @@ def editar_perfil(request):
 
 
 def perfil_productor_publico(request, pk):
-    """Página pública del productor visible para todos."""
+    from django.db.models import Avg, Count
+    from orders.models import Calificacion
+
     productor = get_object_or_404(Usuario, pk=pk, rol=Usuario.Rol.PRODUCTOR)
     from marketplace.models import Producto
     productos = Producto.objects.filter(
         productor=productor, estado='DISPONIBLE'
     ).select_related('categoria')
+
+    stats = Calificacion.objects.filter(
+        evaluado=productor
+    ).aggregate(promedio=Avg('estrellas'), total=Count('id'))
+
     return render(request, 'accounts/perfil_productor.html', {
         'productor': productor,
-        'productos': productos,
+        'productos':  productos,
+        'promedio':   stats['promedio'],
+        'total_resenas': stats['total'],
     })

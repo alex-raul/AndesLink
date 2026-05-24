@@ -9,45 +9,108 @@
   </div>
 
   {% if ordenes %}
-  <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-    <table class="w-full text-sm">
-      <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
-        <tr>
-          <th class="px-4 py-3 text-left">Código</th>
-          <th class="px-4 py-3 text-left hidden md:table-cell">Fecha</th>
-          <th class="px-4 py-3 text-left hidden md:table-cell">Total</th>
-          <th class="px-4 py-3 text-left">Estado</th>
-          <th class="px-4 py-3 text-left"></th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-100">
-        {% for o in ordenes %}
-        <tr class="hover:bg-gray-50">
-          <td class="px-4 py-3 font-mono font-bold">#{{ o.codigo }}</td>
-          <td class="px-4 py-3 text-gray-400 hidden md:table-cell">{{ o.creado_en|date:"d/m/Y" }}</td>
-          <td class="px-4 py-3 font-medium hidden md:table-cell">S/ {{ o.total }}</td>
-          <td class="px-4 py-3">
-            <span class="px-2 py-1 rounded-full text-xs font-medium
-              {% if o.estado == 'FINALIZADO' or o.estado == 'CONFIRMADO' %}bg-green-100 text-green-800
-              {% elif o.estado == 'RECHAZADO' or o.estado == 'DISPUTADO' %}bg-red-100 text-red-800
-              {% elif o.estado == 'EN_CAMINO' or o.estado == 'ACEPTADO' %}bg-blue-100 text-blue-800
-              {% else %}bg-yellow-100 text-yellow-800{% endif %}">
-              {{ o.get_estado_display }}
-            </span>
-          </td>
-          <td class="px-4 py-3">
-            <a href="{% url 'orders:detalle' o.pk %}" class="text-andes-700 text-xs hover:underline">Ver →</a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="space-y-3">
+    {% for o in ordenes %}
+    <a href="{% url 'orders:detalle' o.pk %}"
+       class="block bg-white rounded-2xl border border-gray-200 p-4 hover:shadow-sm transition">
+      <div class="flex items-center justify-between gap-3 flex-wrap">
+
+        <!-- Número de orden y fecha -->
+        <div>
+          <p class="text-xs text-gray-400 mb-0.5">Orden</p>
+          <p class="font-mono font-bold text-lg">#{{ o.codigo }}</p>
+          <p class="text-xs text-gray-400">{{ o.creado_en|date:"d/m/Y H:i" }}</p>
+        </div>
+
+        <!-- Productos del pedido (nombres resumidos) -->
+        <div class="flex-1 hidden sm:block">
+          <p class="text-xs text-gray-400 mb-1">Productos</p>
+          <p class="text-sm text-gray-600 truncate">
+            {% for item in o.items.all %}
+              {{ item.producto.nombre }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+          </p>
+        </div>
+
+        <!-- Total -->
+        <div class="text-right">
+          <p class="text-xs text-gray-400 mb-0.5">Total</p>
+          <p class="font-bold text-andes-700">S/ {{ o.total }}</p>
+        </div>
+
+        <!-- Estado con color y descripción -->
+        <div class="text-right">
+          <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold
+            {% if o.estado == 'FINALIZADO' or o.estado == 'CONFIRMADO' %}
+              bg-green-100 text-green-800
+            {% elif o.estado == 'RECHAZADO' or o.estado == 'DISPUTADO' %}
+              bg-red-100 text-red-800
+            {% elif o.estado == 'EN_CAMINO' %}
+              bg-blue-100 text-blue-800
+            {% elif o.estado == 'ACEPTADO' %}
+              bg-indigo-100 text-indigo-800
+            {% elif o.estado == 'ENTREGADO' %}
+              bg-teal-100 text-teal-800
+            {% elif o.estado == 'PAGADO' %}
+              bg-yellow-100 text-yellow-800
+            {% else %}
+              bg-gray-100 text-gray-600
+            {% endif %}">
+            {{ o.get_estado_display }}
+          </span>
+          <!-- Descripción corta del estado -->
+          <p class="text-xs text-gray-400 mt-1">
+            {% if o.estado == 'PENDIENTE_PAGO' %}Esperando pago
+            {% elif o.estado == 'PAGADO' %}Pago retenido, esperando al productor
+            {% elif o.estado == 'ACEPTADO' %}El productor aceptó tu pedido
+            {% elif o.estado == 'RECHAZADO' %}Pedido rechazado, pago devuelto
+            {% elif o.estado == 'EN_CAMINO' %}Tu pedido está en camino
+            {% elif o.estado == 'ENTREGADO' %}Confirma que lo recibiste
+            {% elif o.estado == 'CONFIRMADO' %}Recepción confirmada
+            {% elif o.estado == 'FINALIZADO' %}Pago liberado al productor
+            {% elif o.estado == 'DISPUTADO' %}En revisión por disputa
+            {% endif %}
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Barra de progreso del flujo -->
+      <div class="mt-3 pt-3 border-t border-gray-50">
+        {% with pasos="PAGADO,ACEPTADO,EN_CAMINO,ENTREGADO,FINALIZADO" %}
+        <div class="flex items-center gap-1">
+          {% for paso in pasos.split %}{% endfor %}
+          {% for etapa in "Pagado,Aceptado,En camino,Entregado,Finalizado"|split:"," %}
+          <div class="flex-1 text-center">
+            <div class="h-1.5 rounded-full mb-1
+              {% if o.estado == 'PAGADO' and forloop.counter == 1 %}bg-yellow-400
+              {% elif o.estado == 'ACEPTADO' and forloop.counter <= 2 %}bg-andes-700
+              {% elif o.estado == 'EN_CAMINO' and forloop.counter <= 3 %}bg-blue-500
+              {% elif o.estado == 'ENTREGADO' and forloop.counter <= 4 %}bg-teal-500
+              {% elif o.estado == 'FINALIZADO' or o.estado == 'CONFIRMADO' %}bg-green-500
+              {% else %}bg-gray-200{% endif %}">
+            </div>
+            <p class="text-xs text-gray-400 hidden md:block">{{ etapa }}</p>
+          </div>
+          {% if not forloop.last %}
+          <div class="w-1 h-1 rounded-full bg-gray-200 flex-shrink-0"></div>
+          {% endif %}
+          {% endfor %}
+        </div>
+        {% endwith %}
+      </div>
+
+    </a>
+    {% endfor %}
   </div>
+
   {% else %}
   <div class="text-center py-14 text-gray-400">
     <div class="text-5xl mb-3">📦</div>
     <p class="font-medium">Aún no tienes pedidos</p>
-    <a href="/" class="mt-2 inline-block text-andes-700 text-sm hover:underline">Explorar productos →</a>
+    <a href="/" class="mt-2 inline-block text-andes-700 text-sm hover:underline">
+      Explorar productos →
+    </a>
   </div>
   {% endif %}
 </div>

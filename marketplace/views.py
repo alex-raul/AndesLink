@@ -1,7 +1,9 @@
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Q
 from .models import Producto, Categoria
-
+from django.db.models import Avg
+from orders.models import Calificacion
+from django.db import models
 
 def home(request):
     categorias = Categoria.objects.all()
@@ -48,13 +50,22 @@ def detalle_producto(request, pk):
         Producto.objects.select_related('productor', 'categoria'),
         pk=pk
     )
-    # Otros productos del mismo productor
     otros = Producto.objects.filter(
         productor=producto.productor,
         estado='DISPONIBLE'
     ).exclude(pk=pk)[:4]
 
+    # Promedio de estrellas del productor
+    stats_productor = Calificacion.objects.filter(
+        evaluado=producto.productor
+    ).aggregate(
+        promedio=Avg('estrellas'),
+        total=models.Count('id')
+    )
+
     return render(request, 'marketplace/detalle.html', {
-        'producto': producto,
-        'otros':    otros,
+        'producto':         producto,
+        'otros':            otros,
+        'promedio':         stats_productor['promedio'],
+        'total_resenas':    stats_productor['total'],
     })

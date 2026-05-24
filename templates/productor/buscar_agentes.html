@@ -2,62 +2,104 @@
 {% block title %}Buscar agente — AndesLink{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto px-4 py-6">
+<div class="max-w-4xl mx-auto px-4 py-6">
   <a href="{% url 'productor:solicitudes' %}"
      class="text-sm text-andes-700 hover:underline mb-4 inline-block">← Volver</a>
-  <h1 class="text-xl font-bold mb-5">Buscar un agente andino</h1>
 
+  <div class="flex items-center justify-between mb-5">
+    <h1 class="text-xl font-bold">Agentes andinos disponibles</h1>
+    <span class="text-sm text-gray-400">{{ agentes|length }} agente{{ agentes|length|pluralize }}</span>
+  </div>
+
+  <!-- Buscador -->
   <form method="get" class="flex gap-2 mb-6">
     <input type="text" name="q" value="{{ q }}"
-           placeholder="Buscar por nombre o departamento…"
+           placeholder="Filtrar por nombre o departamento…"
            class="flex-1 border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-andes-500">
     <button type="submit"
-            class="bg-andes-700 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-andes-900 transition">
-      Buscar
+            class="bg-yellow-500 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-yellow-600 transition">
+      Filtrar
     </button>
+    {% if q %}
+    <a href="{% url 'productor:buscar_agentes' %}"
+       class="border border-gray-300 text-gray-500 px-4 py-2 rounded-xl text-sm hover:bg-gray-50 transition">
+      Limpiar
+    </a>
+    {% endif %}
   </form>
 
   {% if agentes %}
-  <div class="space-y-3">
+  <div class="grid sm:grid-cols-2 gap-4">
     {% for a in agentes %}
-    <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between gap-3">
+    <div class="bg-white rounded-2xl border border-gray-200 p-4 flex flex-col gap-3">
+
+      <!-- Cabecera del agente -->
       <div class="flex items-center gap-3">
         {% if a.foto %}
           <img src="{{ a.foto.url }}"
-               class="w-12 h-12 rounded-full object-cover border-2 border-yellow-200">
+               class="w-14 h-14 rounded-full object-cover border-2 border-yellow-200 flex-shrink-0">
         {% else %}
-          <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center text-2xl border-2 border-yellow-200">
+          <div class="w-14 h-14 rounded-full bg-yellow-100 flex items-center justify-center text-2xl border-2 border-yellow-200 flex-shrink-0">
             🧭
           </div>
         {% endif %}
-        <div>
-          <p class="font-semibold">{{ a.get_full_name }}</p>
+        <div class="min-w-0">
+          <p class="font-bold truncate">{{ a.get_full_name }}</p>
           <p class="text-xs text-gray-400">
             📍 {{ a.departamento }}{% if a.provincia %}, {{ a.provincia }}{% endif %}
           </p>
-          <p class="text-xs text-gray-400">
-            {{ a.productores_asignados.count }} productor{{ a.productores_asignados.count|pluralize }} asignado{{ a.productores_asignados.count|pluralize }}
-          </p>
+          {% if a.telefono %}
+          <p class="text-xs text-gray-400">📞 {{ a.telefono }}</p>
+          {% endif %}
         </div>
       </div>
+
+      <!-- Datos relevantes -->
+      <div class="grid grid-cols-2 gap-2 text-center">
+        <div class="bg-yellow-50 rounded-xl py-2">
+          <p class="text-base font-bold text-yellow-700">
+            {{ a.productores_asignados.count }}
+          </p>
+          <p class="text-xs text-gray-400">Productores</p>
+        </div>
+        <div class="bg-yellow-50 rounded-xl py-2">
+          <p class="text-base font-bold text-gray-700">
+            {{ a.actas.count }}
+          </p>
+          <p class="text-xs text-gray-400">Validaciones</p>
+        </div>
+      </div>
+
+      <!-- Estado de verificación -->
+      <div class="flex items-center gap-2">
+        <span class="text-xs px-2 py-1 rounded-full
+          {% if a.estado_verificacion == 'VERIFICADO' %}bg-green-100 text-green-700
+          {% else %}bg-gray-100 text-gray-500{% endif %}">
+          {% if a.estado_verificacion == 'VERIFICADO' %}✓ Verificado{% else %}Pendiente{% endif %}
+        </span>
+        <span class="text-xs text-gray-400">
+          Miembro desde {{ a.date_joined|date:"m/Y" }}
+        </span>
+      </div>
+
+      <!-- Botón -->
       <a href="{% url 'productor:enviar_solicitud_agente' a.pk %}"
-         class="bg-yellow-500 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-yellow-600 transition flex-shrink-0">
+         class="text-center bg-yellow-500 text-white py-2 rounded-xl text-sm font-semibold hover:bg-yellow-600 transition mt-auto">
         Enviar solicitud
       </a>
+
     </div>
     {% endfor %}
   </div>
 
-  {% elif q %}
-  <div class="text-center py-12 text-gray-400">
-    <div class="text-4xl mb-2">🔍</div>
-    <p>No se encontraron agentes para "<strong>{{ q }}</strong>"</p>
-  </div>
   {% else %}
-  <div class="text-center py-12 text-gray-400">
-    <div class="text-4xl mb-2">🧭</div>
-    <p>Escribe un nombre o departamento para buscar</p>
+  <div class="text-center py-14 text-gray-400">
+    <div class="text-5xl mb-3">🧭</div>
+    <p class="font-medium">
+      {% if q %}No hay agentes para "{{ q }}"{% else %}No hay agentes disponibles aún{% endif %}
+    </p>
   </div>
   {% endif %}
+
 </div>
 {% endblock %}

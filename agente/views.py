@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, Count, Prefetch
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
 from marketplace.models import Producto
@@ -41,6 +41,7 @@ def dashboard(request):
     pedidos = Orden.objects.filter(
         items__producto__productor_id__in=productores_ids
     ).distinct().order_by('-creado_en')[:20]
+
 
     return render(request, 'agente/dashboard.html', {
         'productores_asignados':  productores_asignados,
@@ -96,9 +97,7 @@ def solicitudes_zona(request):
 @solo_agente
 def buscar_productores(request):
     q = request.GET.get('q', '').strip()
-    productores = []
 
-    # IDs con los que ya tiene relación activa o solicitud pendiente
     ya_asignados = ProductorAsignado.objects.filter(
         agente=request.user
     ).values_list('productor_id', flat=True)
@@ -114,15 +113,33 @@ def buscar_productores(request):
         ids_con_relacion.add(rec)
     ids_con_relacion.discard(request.user.pk)
 
+    # Siempre muestra todos, filtra si hay búsqueda
+    productores = Usuario.objects.filter(
+        rol=Usuario.Rol.PRODUCTOR
+    ).exclude(
+        pk__in=ids_con_relacion
+    ).annotate(
+        vendidos_count=Count(
+            'productos',
+            filter=Q(productos__estado='VENDIDO')
+        )
+    )
+
     if q:
-        productores = Usuario.objects.filter(
-            rol=Usuario.Rol.PRODUCTOR      
-        ).filter(
+        productores = productores.filter(
             Q(first_name__icontains=q) |
             Q(last_name__icontains=q) |
             Q(departamento__icontains=q)
-        ).exclude(pk__in=ids_con_relacion)
+        )
 
+    productores = productores.order_by('first_name')
+
+    for p in productores:
+        p.categorias_productos = (
+            p.productos.exclude(categoria__isnull=True)
+            .values_list('categoria__nombre', flat=True)
+            .distinct()
+        )
     return render(request, 'agente/buscar_productores.html', {
         'productores': productores,
         'q': q,
