@@ -69,3 +69,41 @@ def detalle_producto(request, pk):
         'promedio':         stats_productor['promedio'],
         'total_resenas':    stats_productor['total'],
     })
+
+from django.http import JsonResponse
+
+def productos_geojson(request):
+    """Devuelve todos los productos con coordenadas en formato JSON para Leaflet."""
+    productos = Producto.objects.filter(
+        estado='DISPONIBLE',
+        latitud__isnull=False,
+        longitud__isnull=False,
+    ).select_related('productor', 'categoria')
+
+    # Filtro por categoría (opcional, desde el mapa)
+    cat_id = request.GET.get('categoria')
+    if cat_id:
+        productos = productos.filter(categoria_id=cat_id)
+
+    data = []
+    for p in productos:
+        data.append({
+            'id':         p.pk,
+            'nombre':     p.nombre,
+            'precio':     str(p.precio_unitario),
+            'unidad':     p.get_unidad_display(),
+            'cantidad':   str(p.cantidad),
+            'categoria':  p.categoria.nombre if p.categoria else 'Sin categoría',
+            'categoria_id': p.categoria_id,
+            'icono':      p.categoria.icono if p.categoria else '🌿',
+            'departamento': p.departamento,
+            'provincia':  p.provincia,
+            'productor':  p.productor.get_full_name(),
+            'productor_id': p.productor_id,
+            'imagen':     p.imagen.url if p.imagen else None,
+            'lat':        float(p.latitud),
+            'lng':        float(p.longitud),
+            'url':        f'/producto/{p.pk}/',
+        })
+
+    return JsonResponse({'productos': data})

@@ -104,4 +104,244 @@
   {% endif %}
 
 </div>
+  <!-- ===================== SECCIÓN MAPA ===================== -->
+  {% if categorias %}
+  <div class="max-w-6xl mx-auto px-4 mt-8 mb-6">
+
+    <!-- Botón para mostrar/ocultar el mapa -->
+    <button id="btn-toggle-mapa"
+            onclick="toggleMapa()"
+            class="flex items-center gap-2 bg-white border border-gray-200 hover:border-andes-500
+                  text-gray-700 hover:text-andes-700 px-5 py-3 rounded-2xl font-semibold
+                  text-sm shadow-sm hover:shadow-md transition w-full sm:w-auto justify-center">
+      <span id="icono-mapa">🗺️</span>
+      <span id="texto-btn-mapa">Ver productos en el mapa</span>
+    </button>
+
+    <!-- Contenedor del mapa (oculto por defecto) -->
+    <div id="seccion-mapa" class="hidden mt-4">
+
+      <!-- Filtros de categoría del mapa -->
+      <div class="bg-white rounded-2xl border border-gray-200 p-4 mb-3">
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          Filtrar por categoría
+        </p>
+        <div class="flex flex-wrap gap-2" id="filtros-mapa">
+          <button onclick="filtrarMapa(null, this)"
+                  data-cat=""
+                  class="filtro-btn activo px-3 py-1.5 rounded-full text-xs font-semibold border
+                        bg-andes-700 text-white border-andes-700 transition">
+            🌍 Todos
+          </button>
+          {% for cat in categorias %}
+          <button onclick="filtrarMapa('{{ cat.pk }}', this)"
+                  data-cat="{{ cat.pk }}"
+                  class="filtro-btn px-3 py-1.5 rounded-full text-xs font-semibold border
+                        bg-white text-gray-600 border-gray-300 hover:border-andes-500 transition">
+            {{ cat.icono }} {{ cat.nombre }}
+          </button>
+          {% endfor %}
+        </div>
+
+        <!-- Contador de resultados en mapa -->
+        <p id="mapa-contador" class="text-xs text-gray-400 mt-2"></p>
+      </div>
+
+      <!-- El mapa -->
+      <div id="mapa-principal"
+          class="w-full rounded-2xl border border-gray-200 overflow-hidden shadow-sm"
+          style="height: 480px;"></div>
+
+      <!-- Leyenda -->
+      <p class="text-xs text-gray-400 mt-2 text-center">
+        Haz clic en un marcador para ver la información del producto
+      </p>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Leaflet CSS y JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+  // ── Estado global ─────────────────────────────────────────────────────────────
+  let mapa = null;
+  let marcadores = [];
+  let mapaInicializado = false;
+  let categoriaActiva = null;
+
+  // ── Mostrar / ocultar mapa ────────────────────────────────────────────────────
+  function toggleMapa() {
+    const seccion = document.getElementById('seccion-mapa');
+    const btn     = document.getElementById('texto-btn-mapa');
+    const icono   = document.getElementById('icono-mapa');
+    const oculto  = seccion.classList.toggle('hidden');
+
+    if (oculto) {
+      btn.textContent   = 'Ver productos en el mapa';
+      icono.textContent = '🗺️';
+    } else {
+      btn.textContent   = 'Ocultar mapa';
+      icono.textContent = '✕';
+      if (!mapaInicializado) {
+        inicializarMapa();
+      }
+    }
+  }
+
+  // ── Inicializar Leaflet ───────────────────────────────────────────────────────
+  function inicializarMapa() {
+    // Centrado en Perú
+    mapa = L.map('mapa-principal').setView([-9.19, -75.01], 6);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
+    }).addTo(mapa);
+
+    mapaInicializado = true;
+    cargarMarcadores(null);
+  }
+
+  // ── Cargar marcadores desde el endpoint JSON ──────────────────────────────────
+  function cargarMarcadores(catId) {
+    // Limpiar marcadores anteriores
+    marcadores.forEach(m => mapa.removeLayer(m));
+    marcadores = [];
+
+    const url = catId
+      ? `/api/productos-mapa/?categoria=${catId}`
+      : '/api/productos-mapa/';
+
+    fetch(url)
+      .then(r => r.json())
+      .then(data => {
+        const productos = data.productos;
+        document.getElementById('mapa-contador').textContent =
+          `${productos.length} producto${productos.length !== 1 ? 's' : ''} en el mapa`;
+
+        if (productos.length === 0) return;
+
+        const bounds = [];
+
+        productos.forEach(p => {
+          if (!p.lat || !p.lng) return;
+          // Icono personalizado con el emoji de la categoría
+          const icono = L.divIcon({
+            html: `<div style="
+              background: white;
+              border: 2px solid #15803d;
+              border-radius: 50% 50% 50% 0;
+              transform: rotate(-45deg);
+              width: 36px; height: 36px;
+              display: flex; align-items: center; justify-content: center;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            ">
+              <span style="transform: rotate(45deg); font-size: 16px;">
+                ${p.icono}
+              </span>
+            </div>`,
+            className: '',
+            iconSize:   [36, 36],
+            iconAnchor: [18, 36],
+            popupAnchor:[0, -40],
+          });
+
+          // Popup con info del producto
+          const imagenHtml = p.imagen
+            ? `<img src="${p.imagen}"
+                    style="width:100%; height:100px; object-fit:cover;
+                          border-radius:8px; margin-bottom:8px;">`
+            : `<div style="width:100%; height:60px; background:#f0fdf4;
+                          border-radius:8px; display:flex; align-items:center;
+                          justify-content:center; font-size:28px; margin-bottom:8px;">
+                ${p.icono}
+              </div>`;
+
+          const popupHtml = `
+            <div style="width:200px; font-family:sans-serif; padding:2px;">
+              ${imagenHtml}
+              <span style="background:#dcfce7; color:#166534; font-size:10px;
+                          padding:2px 8px; border-radius:20px; font-weight:600;">
+                ${p.categoria}
+              </span>
+              <p style="font-weight:700; font-size:14px; margin:6px 0 2px;
+                        line-height:1.3;">
+                ${p.nombre}
+              </p>
+              <p style="font-size:11px; color:#6b7280; margin:0 0 2px;">
+                👨‍🌾 ${p.productor}
+              </p>
+              <p style="font-size:11px; color:#6b7280; margin:0 0 6px;">
+                📍 ${p.departamento}${p.provincia ? ', ' + p.provincia : ''}
+              </p>
+              <div style="display:flex; align-items:baseline; gap:4px; margin-bottom:8px;">
+                <span style="font-size:18px; font-weight:700; color:#15803d;">
+                  S/ ${p.precio}
+                </span>
+                <span style="font-size:11px; color:#9ca3af;">/ ${p.unidad}</span>
+              </div>
+              <p style="font-size:11px; color:#6b7280; margin:0 0 8px;">
+                📦 Stock: ${p.cantidad} ${p.unidad}
+              </p>
+              <a href="${p.url}"
+                style="display:block; text-align:center; background:#15803d;
+                        color:white; padding:8px; border-radius:10px;
+                        font-size:12px; font-weight:600; text-decoration:none;">
+                Ver producto →
+              </a>
+            </div>
+          `;
+
+          const marcador = L.marker([p.lat, p.lng], { icon: icono })
+            .addTo(mapa)
+            .bindPopup(popupHtml, {
+              maxWidth: 220,
+              className: 'popup-andes',
+            });
+
+          marcadores.push(marcador);
+          bounds.push([p.lat, p.lng]);
+        });
+
+        // Ajustar el zoom para mostrar todos los marcadores
+        if (bounds.length > 0) {
+          mapa.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
+        }
+      })
+      .catch(err => console.error('Error cargando productos:', err));
+  }
+
+  // ── Filtrar por categoría ────────────────────────────────────────────────────
+  function filtrarMapa(catId, btnEl) {
+    categoriaActiva = catId;
+
+    // Actualizar estilos de botones
+    document.querySelectorAll('.filtro-btn').forEach(btn => {
+      btn.classList.remove('activo', 'bg-andes-700', 'text-white', 'border-andes-700');
+      btn.classList.add('bg-white', 'text-gray-600', 'border-gray-300');
+    });
+    btnEl.classList.add('activo', 'bg-andes-700', 'text-white', 'border-andes-700');
+    btnEl.classList.remove('bg-white', 'text-gray-600', 'border-gray-300');
+
+    cargarMarcadores(catId);
+  }
+  </script>
+
+  <!-- Estilos para el popup de Leaflet -->
+  <style>
+    .popup-andes .leaflet-popup-content-wrapper {
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      padding: 0;
+      overflow: hidden;
+    }
+    .popup-andes .leaflet-popup-content {
+      margin: 12px;
+    }
+    .popup-andes .leaflet-popup-tip {
+      background: white;
+    }
+  </style>
 {% endblock %}
