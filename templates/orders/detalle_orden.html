@@ -173,5 +173,107 @@
     {% endif %}
   </div>
   {% endif %}
+
+  <!-- CALIFICACIÓN (solo si la orden está finalizada) -->
+    {% if orden.estado == 'FINALIZADO' %}
+
+    <div class="bg-white rounded-2xl border border-gray-200 p-5 mt-4">
+        <h2 class="font-semibold mb-1">Calificación</h2>
+
+        {% if ya_califique %}
+        <p class="text-sm text-gray-400">Ya enviaste tu calificación para esta orden. ¡Gracias!</p>
+        {% else %}
+        {% if es_comprador or es_productor %}
+        <p class="text-xs text-gray-500 mb-3">
+            Califica tu experiencia con esta operación (solo puedes hacerlo una vez).
+        </p>
+        <form method="post" action="{% url 'orders:calificar' orden.pk %}" class="space-y-3">
+            {% csrf_token %}
+
+            <!-- Selector de estrellas visual -->
+            <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Estrellas</label>
+            <div class="flex gap-1" id="star-selector">
+                {% for i in "12345" %}
+                <button type="button"
+                        data-val="{{ forloop.counter }}"
+                        class="star-btn text-3xl text-gray-300 hover:text-yellow-400 transition leading-none"
+                        aria-label="{{ forloop.counter }} estrella{{ forloop.counter|pluralize }}">
+                ★
+                </button>
+                {% endfor %}
+            </div>
+            <input type="hidden" name="estrellas" id="id_estrellas" value="">
+            </div>
+
+            <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Comentario (opcional)</label>
+            <textarea name="comentario" rows="3"
+                        placeholder="Cuéntanos cómo fue la experiencia…"
+                        class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-andes-500"></textarea>
+            </div>
+
+            <button type="submit" id="btn-calificar" disabled
+                    class="bg-yellow-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold
+                        hover:bg-yellow-600 transition disabled:opacity-40 disabled:cursor-not-allowed">
+            Enviar calificación
+            </button>
+        </form>
+        {% endif %}
+        {% endif %}
+    </div>
+    
+
+    <!-- Calificaciones recibidas en esta orden -->
+    {% if orden.calificaciones.all %}
+    <div class="bg-gray-50 rounded-2xl border border-gray-100 p-5 mt-3">
+        <h2 class="font-semibold mb-3 text-sm text-gray-600">Calificaciones de esta operación</h2>
+        {% for c in orden.calificaciones.all %}
+        <div class="bg-white rounded-xl p-3 mb-2 border border-gray-100">
+        <div class="flex items-center justify-between mb-1">
+            <p class="text-sm font-medium">{{ c.evaluador.get_full_name }}</p>
+            <span class="text-yellow-400 text-lg">
+            {% for i in "12345" %}
+                {% if forloop.counter <= c.estrellas %}★{% else %}☆{% endif %}
+            {% endfor %}
+            </span>
+        </div>
+        {% if c.comentario %}
+            <p class="text-xs text-gray-500 italic">"{{ c.comentario }}"</p>
+        {% endif %}
+        <p class="text-xs text-gray-300 mt-1">{{ c.creado_en|date:"d/m/Y" }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endif %}
+
+    <script>
+    const btns = document.querySelectorAll('.star-btn');
+    const input = document.getElementById('id_estrellas');
+    const btnEnviar = document.getElementById('btn-calificar');
+    let seleccionada = 0;
+
+    btns.forEach(btn => {
+        btn.addEventListener('mouseenter', () => {
+        const val = parseInt(btn.dataset.val);
+        btns.forEach((b, i) => {
+            b.classList.toggle('text-yellow-400', i < val);
+            b.classList.toggle('text-gray-300', i >= val);
+        });
+        });
+        btn.addEventListener('mouseleave', () => {
+        btns.forEach((b, i) => {
+            b.classList.toggle('text-yellow-400', i < seleccionada);
+            b.classList.toggle('text-gray-300', i >= seleccionada);
+        });
+        });
+        btn.addEventListener('click', () => {
+        seleccionada = parseInt(btn.dataset.val);
+        input.value = seleccionada;
+        btnEnviar.disabled = false;
+        });
+    });
+</script>
 </div>
 {% endblock %}

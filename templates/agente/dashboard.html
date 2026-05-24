@@ -2,88 +2,160 @@
 {% block title %}Panel Agente — AndesLink{% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto px-4 py-6">
-  <div class="flex items-center justify-between mb-5">
+<div class="max-w-5xl mx-auto px-4 py-6 space-y-6">
+
+  <div class="flex items-center justify-between">
     <div>
-      <h1 class="text-xl font-bold">Panel Agente Andino 🧭</h1>
-      <p class="text-sm text-gray-500">{{ user.get_full_name }} · {{ user.departamento }}</p>
+      <h1 class="text-xl font-bold">Hola, {{ user.first_name }} 🧭</h1>
+      <p class="text-sm text-gray-500">Panel de Agente Andino</p>
     </div>
-    <a href="{% url 'agente:lista_productores' %}"
+    <a href="{% url 'agente:buscar' %}"
        class="bg-andes-700 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-andes-900 transition">
-      + Asignar productor
+      + Buscar productores
     </a>
   </div>
 
-  <!-- Stats -->
-  <div class="grid grid-cols-3 gap-3 mb-6">
-    <div class="bg-white border border-gray-200 rounded-xl p-4 text-center">
-      <p class="text-2xl font-bold text-andes-700">{{ stats.productores }}</p>
-      <p class="text-xs text-gray-500">Productores a cargo</p>
-    </div>
-    <div class="bg-white border border-gray-200 rounded-xl p-4 text-center">
-      <p class="text-2xl font-bold text-green-600">{{ stats.productos_activos }}</p>
-      <p class="text-xs text-gray-500">Productos activos</p>
-    </div>
-    <div class="bg-white border border-gray-200 rounded-xl p-4 text-center">
-      <p class="text-2xl font-bold text-yellow-500">{{ stats.solicitudes_pendientes }}</p>
-      <p class="text-xs text-gray-500">Solicitudes pendientes</p>
+  <!-- Solicitudes pendientes recibidas -->
+  {% if solicitudes_recibidas %}
+  <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-5">
+    <h2 class="font-semibold text-yellow-800 mb-3">
+      Solicitudes recibidas ({{ solicitudes_recibidas|length }})
+    </h2>
+    <div class="space-y-3">
+      {% for s in solicitudes_recibidas %}
+      <div class="bg-white rounded-xl border border-yellow-100 p-4 flex items-center justify-between gap-3">
+        <div>
+          <p class="font-semibold text-sm">{{ s.iniciador.get_full_name }}</p>
+          <p class="text-xs text-gray-500">{{ s.iniciador.departamento }}</p>
+          {% if s.mensaje %}
+            <p class="text-xs text-gray-600 mt-1 italic">"{{ s.mensaje }}"</p>
+          {% endif %}
+        </div>
+        <div class="flex gap-2">
+          <form method="post" action="{% url 'agente:aceptar_solicitud' s.pk %}">
+            {% csrf_token %}
+            <button type="submit"
+                    class="bg-andes-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-andes-900 transition">
+              Aceptar
+            </button>
+          </form>
+          <form method="post" action="{% url 'agente:rechazar_solicitud' s.pk %}">
+            {% csrf_token %}
+            <button type="submit"
+                    class="border border-red-300 text-red-500 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-red-50 transition">
+              Rechazar
+            </button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
     </div>
   </div>
+  {% endif %}
 
-  <!-- Solicitudes pendientes -->
-  {% if solicitudes_pendientes %}
-  <div class="mb-6">
-    <h2 class="text-base font-semibold mb-3">⚠️ Solicitudes que requieren atención</h2>
-    <div class="bg-white rounded-2xl border border-yellow-200 overflow-hidden">
+  <!-- Solicitudes enviadas pendientes -->
+  {% if solicitudes_enviadas %}
+  <div class="bg-gray-50 border border-gray-200 rounded-2xl p-5">
+    <h2 class="font-semibold text-gray-600 mb-3">Solicitudes enviadas pendientes</h2>
+    <div class="space-y-2">
+      {% for s in solicitudes_enviadas %}
+      <div class="bg-white rounded-xl border border-gray-100 p-3 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium">{{ s.receptor.get_full_name }}</p>
+          <p class="text-xs text-gray-400">{{ s.receptor.departamento }} · enviada {{ s.creado_en|date:"d/m/Y" }}</p>
+        </div>
+        <span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full">Pendiente</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Productores asignados -->
+  <div class="bg-white rounded-2xl border border-gray-200 p-5">
+    <h2 class="font-semibold mb-4">
+      Mis productores ({{ productores_asignados|length }})
+    </h2>
+    {% if productores_asignados %}
+    <div class="grid sm:grid-cols-2 gap-3">
+      {% for pa in productores_asignados %}
+      <div class="border border-gray-100 rounded-xl p-4 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          {% if pa.productor.foto %}
+            <img src="{{ pa.productor.foto.url }}"
+                 class="w-10 h-10 rounded-full object-cover border-2 border-green-200">
+          {% else %}
+            <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-lg border-2 border-green-200">
+              👨‍🌾
+            </div>
+          {% endif %}
+          <div>
+            <p class="text-sm font-semibold">{{ pa.productor.get_full_name }}</p>
+            <p class="text-xs text-gray-400">📍 {{ pa.productor.departamento }}</p>
+          </div>
+        </div>
+        <form method="post" action="{% url 'agente:eliminar_relacion' pa.pk %}"
+              onsubmit="return confirm('¿Eliminar relación con {{ pa.productor.first_name }}?')">
+          {% csrf_token %}
+          <button type="submit"
+                  class="text-xs text-red-400 hover:text-red-600 border border-red-200 hover:border-red-400 px-2 py-1 rounded-lg transition">
+            Quitar
+          </button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-gray-400 text-sm text-center py-6">
+      Aún no tienes productores asignados.
+      <a href="{% url 'agente:buscar' %}" class="text-andes-700 hover:underline">Busca uno →</a>
+    </p>
+    {% endif %}
+  </div>
+
+  <!-- Pedidos recientes -->
+  <div class="bg-white rounded-2xl border border-gray-200 p-5">
+    <h2 class="font-semibold mb-4">Pedidos de mis productores</h2>
+    {% if pedidos %}
+    <div class="overflow-x-auto">
       <table class="w-full text-sm">
-        <thead class="bg-yellow-50 text-gray-600 text-xs uppercase">
+        <thead class="text-xs text-gray-400 uppercase border-b border-gray-100">
           <tr>
-            <th class="px-4 py-3 text-left">Comprador</th>
-            <th class="px-4 py-3 text-left">Producto</th>
-            <th class="px-4 py-3 text-left hidden md:table-cell">Productor</th>
-            <th class="px-4 py-3 text-left hidden md:table-cell">Fecha</th>
+            <th class="pb-2 text-left">Código</th>
+            <th class="pb-2 text-left hidden md:table-cell">Comprador</th>
+            <th class="pb-2 text-left hidden md:table-cell">Total</th>
+            <th class="pb-2 text-left">Estado</th>
+            <th class="pb-2"></th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100">
-          {% for s in solicitudes_pendientes %}
+        <tbody class="divide-y divide-gray-50">
+          {% for o in pedidos %}
           <tr class="hover:bg-gray-50">
-            <td class="px-4 py-3 font-medium">{{ s.comprador.get_full_name }}</td>
-            <td class="px-4 py-3 text-gray-600">{{ s.producto.nombre }}</td>
-            <td class="px-4 py-3 text-gray-500 hidden md:table-cell">{{ s.producto.productor.get_full_name }}</td>
-            <td class="px-4 py-3 text-gray-400 text-xs hidden md:table-cell">{{ s.creado_en|date:"d/m/Y" }}</td>
+            <td class="py-2 font-mono font-bold">#{{ o.codigo }}</td>
+            <td class="py-2 hidden md:table-cell text-gray-500">{{ o.comprador.get_full_name }}</td>
+            <td class="py-2 hidden md:table-cell">S/ {{ o.total }}</td>
+            <td class="py-2">
+              <span class="px-2 py-0.5 rounded-full text-xs font-medium
+                {% if o.estado == 'FINALIZADO' %}bg-green-100 text-green-700
+                {% elif o.estado == 'RECHAZADO' or o.estado == 'DISPUTADO' %}bg-red-100 text-red-700
+                {% elif o.estado == 'EN_CAMINO' or o.estado == 'ACEPTADO' %}bg-blue-100 text-blue-700
+                {% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                {{ o.get_estado_display }}
+              </span>
+            </td>
+            <td class="py-2 text-right">
+              <a href="{% url 'orders:detalle' o.pk %}"
+                 class="text-andes-700 text-xs hover:underline">Ver →</a>
+            </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
-    <a href="{% url 'agente:solicitudes' %}" class="text-xs text-andes-700 hover:underline mt-2 inline-block">
-      Ver todas las solicitudes →
-    </a>
+    {% else %}
+    <p class="text-gray-400 text-sm text-center py-6">No hay pedidos activos.</p>
+    {% endif %}
   </div>
-  {% endif %}
 
-  <!-- Mis productores -->
-  <h2 class="text-base font-semibold mb-3">👨‍🌾 Mis productores</h2>
-  {% if asignaciones %}
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-    {% for a in asignaciones %}
-    <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-3">
-      <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-lg">👤</div>
-      <div>
-        <p class="font-medium text-sm">{{ a.productor.get_full_name }}</p>
-        <p class="text-xs text-gray-500">📍 {{ a.productor.departamento }}</p>
-      </div>
-    </div>
-    {% endfor %}
-  </div>
-  {% else %}
-  <div class="text-center py-10 text-gray-400">
-    <p class="text-4xl mb-2">🗺️</p>
-    <p class="text-sm">Aún no tienes productores asignados</p>
-    <a href="{% url 'agente:lista_productores' %}" class="text-andes-700 text-sm hover:underline mt-1 inline-block">
-      Buscar productores →
-    </a>
-  </div>
-  {% endif %}
 </div>
 {% endblock %}

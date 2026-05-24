@@ -2,36 +2,139 @@
 {% block title %}{{ accion }} producto — AndesLink{% endblock %}
 
 {% block content %}
-<div class="max-w-xl mx-auto px-4 py-6">
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<div class="max-w-2xl mx-auto px-4 py-6">
+  <a href="{% url 'productor:dashboard' %}"
+     class="text-sm text-andes-700 hover:underline mb-4 inline-block">← Volver al panel</a>
   <h1 class="text-xl font-bold mb-5">{{ accion }} producto</h1>
+
   <div class="bg-white rounded-2xl border border-gray-200 p-6">
-    <form method="post" enctype="multipart/form-data" class="space-y-4">
+    <form method="post" enctype="multipart/form-data" class="space-y-4" id="producto-form">
       {% csrf_token %}
+
       {% for field in form %}
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">{{ field.label }}</label>
-        <div class="[&>input]:w-full [&>input]:border [&>input]:border-gray-300 [&>input]:rounded-lg [&>input]:px-3 [&>input]:py-2 [&>input]:text-sm
-                    [&>select]:w-full [&>select]:border [&>select]:border-gray-300 [&>select]:rounded-lg [&>select]:px-3 [&>select]:py-2 [&>select]:text-sm
-                    [&>textarea]:w-full [&>textarea]:border [&>textarea]:border-gray-300 [&>textarea]:rounded-lg [&>textarea]:px-3 [&>textarea]:py-2 [&>textarea]:text-sm">
-          {{ field }}
+        {% if field.name != 'latitud' and field.name != 'longitud' %}
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ field.label }}</label>
+          <div class="[&>input]:w-full [&>input]:border [&>input]:border-gray-300 [&>input]:rounded-lg [&>input]:px-3 [&>input]:py-2 [&>input]:text-sm
+                      [&>select]:w-full [&>select]:border [&>select]:border-gray-300 [&>select]:rounded-lg [&>select]:px-3 [&>select]:py-2 [&>select]:text-sm
+                      [&>textarea]:w-full [&>textarea]:border [&>textarea]:border-gray-300 [&>textarea]:rounded-lg [&>textarea]:px-3 [&>textarea]:py-2 [&>textarea]:text-sm">
+            {{ field }}
+          </div>
+          {% if field.errors %}
+            <p class="text-xs text-red-600 mt-1">{{ field.errors.0 }}</p>
+          {% endif %}
         </div>
-        {% if field.errors %}
-          <p class="text-xs text-red-600 mt-1">{{ field.errors.0 }}</p>
+        {% else %}
+          {{ field }}   {# hidden inputs de latitud y longitud #}
         {% endif %}
-        {% if field.help_text %}
-          <p class="text-xs text-gray-400 mt-1">{{ field.help_text }}</p>
-        {% endif %}
-      </div>
       {% endfor %}
+
+      <!-- SECCIÓN MAPA -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          📍 Ubicación de la cosecha
+        </label>
+        <p class="text-xs text-gray-400 mb-2">
+          Haz clic en el mapa o arrastra el marcador para marcar el punto exacto de tu cosecha.
+        </p>
+
+        <!-- Coordenadas actuales -->
+        <div id="coords-display"
+             class="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2 mb-2 font-mono">
+          {% if form.instance.latitud %}
+            📌 Lat: {{ form.instance.latitud }}, Lng: {{ form.instance.longitud }}
+          {% else %}
+            Sin ubicación seleccionada
+          {% endif %}
+        </div>
+
+        <!-- Mapa -->
+        <div id="mapa-producto"
+             class="w-full rounded-xl border border-gray-300 overflow-hidden"
+             style="height: 320px;"></div>
+
+        <button type="button" id="btn-limpiar-mapa"
+                class="mt-2 text-xs text-red-400 hover:text-red-600 hover:underline">
+          Quitar ubicación del mapa
+        </button>
+      </div>
+
       <div class="flex gap-3 pt-2">
-        <button type="submit" class="flex-1 bg-andes-700 text-white py-2.5 rounded-xl font-semibold hover:bg-andes-900 transition">
+        <button type="submit"
+                class="flex-1 bg-andes-700 text-white py-2.5 rounded-xl font-semibold hover:bg-andes-900 transition">
           {{ accion }} producto
         </button>
-        <a href="{% url 'productor:dashboard' %}" class="flex-1 text-center border border-gray-300 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition">
+        <a href="{% url 'productor:dashboard' %}"
+           class="flex-1 text-center border border-gray-300 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition">
           Cancelar
         </a>
       </div>
     </form>
   </div>
 </div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const inputLat = document.getElementById('id_latitud');
+  const inputLng = document.getElementById('id_longitud');
+  const coordsDisplay = document.getElementById('coords-display');
+
+  // Coordenadas iniciales: si ya tiene, las usa; si no, centra en Perú
+  const initLat = parseFloat(inputLat.value) || -9.19;
+  const initLng = parseFloat(inputLng.value) || -75.01;
+  const tieneUbicacion = !!inputLat.value;
+
+  const mapa = L.map('mapa-producto').setView([initLat, initLng], tieneUbicacion ? 13 : 6);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19,
+  }).addTo(mapa);
+
+  let marcador = null;
+
+  function colocarMarcador(lat, lng) {
+    if (marcador) {
+      marcador.setLatLng([lat, lng]);
+    } else {
+      marcador = L.marker([lat, lng], { draggable: true }).addTo(mapa);
+      marcador.on('dragend', function(e) {
+        const pos = e.target.getLatLng();
+        actualizarCoordenadas(pos.lat, pos.lng);
+      });
+    }
+    actualizarCoordenadas(lat, lng);
+  }
+
+  function actualizarCoordenadas(lat, lng) {
+    inputLat.value = lat.toFixed(6);
+    inputLng.value = lng.toFixed(6);
+    coordsDisplay.textContent = `📌 Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
+  }
+
+  // Si ya tenía coordenadas, mostrar el marcador
+  if (tieneUbicacion) {
+    colocarMarcador(initLat, initLng);
+  }
+
+  // Clic en el mapa coloca/mueve el marcador
+  mapa.on('click', function(e) {
+    colocarMarcador(e.latlng.lat, e.latlng.lng);
+  });
+
+  // Botón limpiar
+  document.getElementById('btn-limpiar-mapa').addEventListener('click', function() {
+    if (marcador) {
+      mapa.removeLayer(marcador);
+      marcador = null;
+    }
+    inputLat.value = '';
+    inputLng.value = '';
+    coordsDisplay.textContent = 'Sin ubicación seleccionada';
+  });
+</script>
 {% endblock %}

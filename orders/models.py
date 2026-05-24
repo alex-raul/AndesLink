@@ -111,3 +111,33 @@ class ConfirmacionEntrega(models.Model):
 
     def __str__(self):
         return f"Entrega orden #{self.orden.codigo}"
+
+class Calificacion(models.Model):
+    orden        = models.ForeignKey(
+        'Orden',
+        on_delete=models.CASCADE,
+        related_name='calificaciones'
+    )
+    evaluador    = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='calificaciones_dadas'
+    )
+    evaluado     = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='calificaciones_recibidas'
+    )
+    estrellas    = models.PositiveSmallIntegerField(
+        choices=[(i, i) for i in range(1, 6)]
+    )
+    comentario   = models.TextField(blank=True)
+    creado_en    = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # Una calificación por evaluador por orden
+        unique_together = [('orden', 'evaluador')]
+        ordering = ['-creado_en']
+
+    def __str__(self):
+        return f"{self.evaluador} → {self.evaluado}: {self.estrellas}★ (Orden #{self.orden.codigo})"

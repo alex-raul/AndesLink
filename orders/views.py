@@ -9,7 +9,7 @@ from .carrito import Carrito
 from .forms import CheckoutForm, ConfirmarEntregaForm, DisputaForm
 from .models import Orden, ItemOrden, PagoSimulado, ConfirmacionEntrega
 from notificaciones.utils import notificar_nuevo_pedido, notificar_cambio_estado, notificar
-
+from decimal import Decimal, InvalidOperation
 
 # ── CARRITO ───────────────────────────────────────────────────────────────────
 
@@ -30,11 +30,16 @@ def agregar_al_carrito(request, pk):
 
 @require_POST
 def actualizar_carrito(request, producto_id):
-    carrito  = Carrito(request)
-    cantidad = Decimal(request.POST.get('cantidad', '1'))
-    carrito.actualizar(producto_id, cantidad)
-    return redirect('orders:carrito')
+    carrito = Carrito(request)
 
+    try:
+        cantidad = Decimal(request.POST.get('cantidad', '1') or '1')
+    except InvalidOperation:
+        cantidad = Decimal('1')
+
+    carrito.actualizar(producto_id, cantidad)
+
+    return redirect('orders:carrito')
 
 @require_POST
 def eliminar_del_carrito(request, producto_id):
@@ -109,7 +114,7 @@ def mis_ordenes(request):
     return render(request, 'orders/mis_ordenes.html', {'ordenes': ordenes})
 
 
-@login_required
+'''@login_required
 def detalle_orden(request, pk):
     orden = get_object_or_404(Orden, pk=pk)
     # Solo el comprador, el productor de algún item o un agente pueden ver
@@ -131,8 +136,41 @@ def detalle_orden(request, pk):
         'es_productor':   es_productor,
         'es_agente':      es_agente,
     })
+'''
+@login_required
+def detalle_orden(request, pk):
+    orden = get_object_or_404(Orden, pk=pk)
 
+    # Solo el comprador, el productor de algún item o un agente pueden ver
+    es_comprador = orden.comprador == request.user
+    es_productor = request.user.es_productor() and \
+                   orden.items.filter(producto__productor=request.user).exists()
+    es_agente = request.user.es_agente()
 
+    if not (es_comprador or es_productor or es_agente or request.user.is_staff):
+        messages.error(request, 'No tienes acceso a esta orden.')
+        return redirect('marketplace:home')
+
+    confirmar_form = ConfirmarEntregaForm() \
+        if es_comprador and orden.estado == Orden.Estado.ENTREGADO else None
+
+    disputa_form = DisputaForm() \
+        if es_comprador and orden.estado == Orden.Estado.ENTREGADO else None
+
+    # NUEVO
+    ya_califique = orden.calificaciones.filter(
+        evaluador=request.user
+    ).exists()
+
+    return render(request, 'orders/detalle_orden.html', {
+        'orden': orden,
+        'confirmar_form': confirmar_form,
+        'disputa_form': disputa_form,
+        'es_comprador': es_comprador,
+        'es_productor': es_productor,
+        'es_agente': es_agente,
+        'ya_califique': ya_califique,  # NUEVO
+    })
 # ── ACCIONES DEL PRODUCTOR / AGENTE ──────────────────────────────────────────
 
 def _puede_gestionar(user, orden):
@@ -279,4 +317,48 @@ def abrir_disputa(request, pk):
             f'/orders/detalle/{orden.pk}/'
         )
         messages.warning(request, 'Disputa registrada. El equipo revisará tu caso.')
+    return redirect('orders:detalle', pk=pk)
+
+from .models import Calificacion
+from .forms import CalificacionForm
+from django.db.models import Avg
+
+
+@login_required
+@require_POST
+def calificar_orden(request, pk):
+    orden = get_object_or_404(Orden, pk=pk, estado=Orden.Estado.FINALIZADO)
+
+    # Verificar que el usuario es parte de la orden
+    es_comprador = orden.comprador == request.user
+    es_productor = request.user.es_productor() and \
+                   orden.items.filter(producto__productor=request.user).exists()
+
+    if not (es_comprador or es_productor):
+        messages.error(request, 'No puedes calificar esta orden.')
+        return redirect('orders:detalle', pk=pk)
+
+    # Verificar que no haya calificado antes
+    if Calificacion.objects.filter(orden=orden, evaluador=request.user).exists():
+        messages.warning(request, 'Ya calificaste esta orden.')
+        return redirect('orders:detalle', pk=pk)
+
+    form = CalificacionForm(request.POST)
+    if form.is_valid():
+        # Determinar a quién se evalúa
+        if es_comprador:
+            # Comprador evalúa al productor (tomamos el primer productor del pedido)
+            evaluado = orden.items.select_related('producto__productor').first().producto.productor
+        else:
+            evaluado = orden.comprador
+
+        Calificacion.objects.create(
+            orden=orden,
+            evaluador=request.user,
+            evaluado=evaluado,
+            estrellas=form.cleaned_data['estrellas'],
+            comentario=form.cleaned_data['comentario'],
+        )
+        messages.success(request, f'¡Calificación de {form.cleaned_data["estrellas"]} estrella(s) enviada!')
+
     return redirect('orders:detalle', pk=pk)

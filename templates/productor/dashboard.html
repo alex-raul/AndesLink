@@ -7,11 +7,16 @@
     <div>
       <h1 class="text-xl font-bold">Hola, {{ user.first_name }} 👋</h1>
       <p class="text-sm text-gray-500">Panel de productor</p>
+      
     </div>
     <a href="{% url 'productor:agregar' %}"
        class="bg-andes-700 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-andes-900 transition">
       + Publicar producto
     </a>
+    <a href="{% url 'productor:solicitudes' %}"
+        class="border border-andes-700 text-andes-700 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-green-50 transition">
+        🧭 Mi agente
+        </a>
   </div>
 
   <!-- Stats -->

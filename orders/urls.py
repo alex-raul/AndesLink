@@ -18,4 +18,5 @@ urlpatterns = [
     path('detalle/<int:pk>/entregar/',            views.confirmar_entrega_agente,     name='entregar'),
     path('detalle/<int:pk>/confirmar/',           views.confirmar_recepcion_comprador,name='confirmar'),
     path('detalle/<int:pk>/disputa/',             views.abrir_disputa,                name='disputa'),
+    path('detalle/<int:pk>/calificar/', views.calificar_orden, name='calificar'),
 ]

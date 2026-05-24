@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}Mis solicitudes — AndesLink{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-6 space-y-5">
+  <a href="{% url 'productor:dashboard' %}"
+     class="text-sm text-andes-700 hover:underline inline-block">← Volver al panel</a>
+  <h1 class="text-xl font-bold">Solicitudes de agentes</h1>
+  <a href="{% url 'productor:buscar_agentes' %}"
+   class="inline-block bg-yellow-500 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-yellow-600 transition">
+  🧭 Buscar agente
+</a>
+
+  <!-- Mi agente actual -->
+  {% if mi_agente %}
+  <div class="bg-green-50 border border-green-200 rounded-2xl p-5 flex items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      {% if mi_agente.agente.foto %}
+        <img src="{{ mi_agente.agente.foto.url }}"
+             class="w-12 h-12 rounded-full object-cover border-2 border-green-300">
+      {% else %}
+        <div class="w-12 h-12 rounded-full bg-green-200 flex items-center justify-center text-xl">🧭</div>
+      {% endif %}
+      <div>
+        <p class="text-xs text-green-600 font-medium mb-0.5">Tu agente andino</p>
+        <p class="font-bold">{{ mi_agente.agente.get_full_name }}</p>
+        <p class="text-xs text-gray-500">📍 {{ mi_agente.agente.departamento }}</p>
+      </div>
+    </div>
+    <form method="post"
+          action="{% url 'productor:eliminar_relacion' mi_agente.pk %}"
+          onsubmit="return confirm('¿Estás seguro de quitar a este agente?')">
+      {% csrf_token %}
+      <button type="submit"
+              class="text-xs text-red-500 border border-red-200 hover:border-red-400 px-3 py-1.5 rounded-lg transition">
+        Quitar agente
+      </button>
+    </form>
+  </div>
+  {% endif %}
+
+  <!-- Solicitudes recibidas -->
+  {% if solicitudes_recibidas %}
+  <div class="bg-white rounded-2xl border border-gray-200 p-5">
+    <h2 class="font-semibold mb-3 text-yellow-700">
+      Solicitudes recibidas ({{ solicitudes_recibidas|length }})
+    </h2>
+    <div class="space-y-3">
+      {% for s in solicitudes_recibidas %}
+      <div class="border border-gray-100 rounded-xl p-4 flex items-center justify-between gap-3">
+        <div>
+          <p class="font-semibold text-sm">{{ s.iniciador.get_full_name }}</p>
+          <p class="text-xs text-gray-400">Agente · {{ s.iniciador.departamento }}</p>
+          {% if s.mensaje %}
+            <p class="text-xs text-gray-600 mt-1 italic">"{{ s.mensaje }}"</p>
+          {% endif %}
+        </div>
+        <div class="flex gap-2">
+          <form method="post" action="{% url 'productor:aceptar_solicitud' s.pk %}">
+            {% csrf_token %}
+            <button type="submit"
+                    class="bg-andes-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-andes-900 transition">
+              Aceptar
+            </button>
+          </form>
+          <form method="post" action="{% url 'productor:rechazar_solicitud' s.pk %}">
+            {% csrf_token %}
+            <button type="submit"
+                    class="border border-red-300 text-red-500 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-red-50 transition">
+              Rechazar
+            </button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Solicitudes enviadas -->
+  {% if solicitudes_enviadas %}
+  <div class="bg-white rounded-2xl border border-gray-200 p-5">
+    <h2 class="font-semibold mb-3 text-gray-500">Solicitudes enviadas pendientes</h2>
+    <div class="space-y-2">
+      {% for s in solicitudes_enviadas %}
+      <div class="border border-gray-100 rounded-xl p-3 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium">{{ s.receptor.get_full_name }}</p>
+          <p class="text-xs text-gray-400">{{ s.receptor.departamento }}</p>
+        </div>
+        <span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full">Pendiente</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if not mi_agente and not solicitudes_recibidas and not solicitudes_enviadas %}
+  <div class="text-center py-12 text-gray-400">
+    <div class="text-4xl mb-2">🧭</div>
+    <p>Aún no tienes solicitudes ni agente asignado.</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

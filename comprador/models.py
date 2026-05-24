@@ -1,3 +1,4 @@
+# comprador/models.py
 from django.db import models
 from django.conf import settings
 from marketplace.models import Producto
@@ -15,7 +16,7 @@ class SolicitudContacto(models.Model):
     comprador   = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='solicitudes_enviadas',
+        related_name='solicitudes_enviada',
         limit_choices_to={'rol': 'COMPRADOR'}
     )
     producto    = models.ForeignKey(

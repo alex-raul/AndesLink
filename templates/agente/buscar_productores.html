@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Buscar productores — AndesLink{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-6">
+  <a href="{% url 'agente:dashboard' %}"
+     class="text-sm text-andes-700 hover:underline mb-4 inline-block">← Volver al panel</a>
+  <h1 class="text-xl font-bold mb-5">Buscar productores verificados</h1>
+
+  <form method="get" class="flex gap-2 mb-6">
+    <input type="text" name="q" value="{{ q }}"
+           placeholder="Buscar por nombre o departamento…"
+           class="flex-1 border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-andes-500">
+    <button type="submit"
+            class="bg-andes-700 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-andes-900 transition">
+      Buscar
+    </button>
+  </form>
+
+  {% if productores %}
+  <div class="space-y-3">
+    {% for p in productores %}
+    <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        {% if p.foto %}
+          <img src="{{ p.foto.url }}" class="w-12 h-12 rounded-full object-cover border-2 border-green-200">
+        {% else %}
+          <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-2xl border-2 border-green-200">
+            👨‍🌾
+          </div>
+        {% endif %}
+        <div>
+          <p class="font-semibold">{{ p.get_full_name }}</p>
+          <p class="text-xs text-gray-400">📍 {{ p.departamento }}{% if p.provincia %}, {{ p.provincia }}{% endif %}</p>
+          <p class="text-xs text-gray-400">{{ p.productos.count }} producto{{ p.productos.count|pluralize }} publicado{{ p.productos.count|pluralize }}</p>
+        </div>
+      </div>
+      <a href="{% url 'agente:enviar_solicitud' p.pk %}"
+         class="bg-andes-700 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-andes-900 transition flex-shrink-0">
+        Enviar solicitud
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  {% elif q %}
+  <div class="text-center py-12 text-gray-400">
+    <div class="text-4xl mb-2">🔍</div>
+    <p>No se encontraron productores para "<strong>{{ q }}</strong>"</p>
+  </div>
+  {% else %}
+  <div class="text-center py-12 text-gray-400">
+    <div class="text-4xl mb-2">🌾</div>
+    <p>Escribe un nombre o departamento para buscar</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

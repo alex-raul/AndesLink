@@ -38,3 +38,18 @@ class DisputaForm(forms.Form):
         label='Descripción detallada',
         widget=forms.Textarea(attrs={'rows': 4}),
     )
+
+class CalificacionForm(forms.Form):
+    estrellas = forms.ChoiceField(
+        choices=[(i, i) for i in range(1, 6)],
+        label='Calificación',
+        widget=forms.HiddenInput()   # lo manejamos con JS de estrellas
+    )
+    comentario = forms.CharField(
+        label='Comentario (opcional)',
+        required=False,
+        widget=forms.Textarea(attrs={
+            'rows': 3,
+            'placeholder': 'Cuéntanos cómo fue la experiencia...'
+        })
+    )

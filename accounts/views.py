@@ -17,6 +17,10 @@ class RegistroView(CreateView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
+        # Si se registra como productor, auto-verificar
+        if self.object.rol == 'PRODUCTOR':
+            self.object.estado_verificacion = 'VERIFICADO'
+            self.object.save(update_fields=['estado_verificacion'])
         login(self.request, self.object)
         return response
 
