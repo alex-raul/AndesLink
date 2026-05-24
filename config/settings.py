@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'productor',
     'comprador',
     'agente',
+    'orders',
+    'notificaciones',
 ]
 
 MIDDLEWARE = [

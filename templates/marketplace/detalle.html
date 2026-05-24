@@ -64,10 +64,15 @@
         {% if producto.estado == 'DISPONIBLE' %}
           {% if user.is_authenticated %}
             {% if user.es_comprador %}
-              <a href="{% url 'comprador:contactar' producto.pk %}"
-                 class="block text-center w-full bg-andes-700 text-white py-3 rounded-xl font-semibold hover:bg-andes-900 transition">
-                📩 Contactar productor
-              </a>
+            <form method="post" action="{% url 'orders:agregar' producto.pk %}" class="flex gap-2 mt-5">
+            {% csrf_token %}
+            <input type="number" name="cantidad" value="1" min="0.1" step="0.1"
+                    class="w-24 border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-center">
+            <button type="submit"
+                    class="flex-1 bg-andes-700 text-white py-2.5 rounded-xl font-semibold hover:bg-andes-900 transition">
+                Añadir al carrito
+            </button>
+            </form>
             {% elif user.es_productor and user == producto.productor %}
               <div class="flex gap-2">
                 <a href="{% url 'productor:editar' producto.pk %}"

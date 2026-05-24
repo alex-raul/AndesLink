@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Notificaciones — AndesLink{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-6">
+  <h1 class="text-xl font-bold mb-5">Notificaciones</h1>
+  {% if notificaciones %}
+  <div class="space-y-2">
+    {% for n in notificaciones %}
+    <a href="{{ n.url_accion|default:'#' }}"
+       class="block bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition {% if not n.leida %}border-l-4 border-l-andes-700{% endif %}">
+      <p class="font-semibold text-sm">{{ n.titulo }}</p>
+      <p class="text-xs text-gray-500 mt-0.5">{{ n.mensaje }}</p>
+      <p class="text-xs text-gray-300 mt-1">{{ n.creado_en|date:"d/m/Y H:i" }}</p>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-14 text-gray-400">
+    <div class="text-5xl mb-3">🔔</div>
+    <p>Sin notificaciones por ahora</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

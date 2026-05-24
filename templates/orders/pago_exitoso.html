@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Pago exitoso — AndesLink{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto px-4 py-16 text-center">
+  <div class="text-6xl mb-4">✅</div>
+  <h1 class="text-2xl font-bold mb-2">¡Pedido realizado!</h1>
+  <p class="text-gray-500 mb-6">Tu pago está retenido hasta confirmar la entrega.</p>
+
+  <div class="bg-white rounded-2xl border border-gray-200 p-5 text-left mb-6">
+    <div class="grid grid-cols-2 gap-3 text-sm">
+      <div>
+        <p class="text-gray-400 text-xs">Código de orden</p>
+        <p class="font-mono font-bold text-lg">#{{ orden.codigo }}</p>
+      </div>
+      <div>
+        <p class="text-gray-400 text-xs">Confirmación de pago</p>
+        <p class="font-mono text-xs font-medium break-all">{{ orden.pago.codigo_confirmacion }}</p>
+      </div>
+      <div>
+        <p class="text-gray-400 text-xs">Total</p>
+        <p class="font-bold text-andes-700">S/ {{ orden.total }}</p>
+      </div>
+      <div>
+        <p class="text-gray-400 text-xs">Método de pago</p>
+        <p class="font-medium">{{ orden.pago.get_metodo_display }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex gap-3 justify-center">
+    <a href="{% url 'orders:detalle' orden.pk %}"
+       class="bg-andes-700 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-andes-900 transition text-sm">
+      Ver mi pedido
+    </a>
+    <a href="/" class="border border-gray-300 text-gray-600 px-5 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition">
+      Seguir comprando
+    </a>
+  </div>
+</div>
+{% endblock %}

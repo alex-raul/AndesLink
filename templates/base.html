@@ -36,6 +36,12 @@
             {% elif user.es_agente %}
                 <a href="{% url 'agente:dashboard' %}" class="hover:text-green-200">Panel agente</a>
             {% endif %}
+            <a href="{% url 'orders:carrito' %}" class="hover:text-green-200 relative">
+                🛒 Carrito
+            </a>
+            <a href="{% url 'notificaciones:lista' %}" class="hover:text-green-200 relative">
+                🔔 <span id="notif-count" class="hidden bg-red-500 text-white text-xs rounded-full px-1.5">0</span>
+            </a>
             <!-- Avatar con nombre clickeable -->
             <a href="{% url 'accounts:perfil' %}" class="flex items-center gap-2 hover:text-green-200">
                 {% if user.foto %}
@@ -107,6 +113,31 @@
     document.getElementById('menu-btn').addEventListener('click', () => {
       document.getElementById('mobile-menu').classList.toggle('hidden');
     });
+
+    
+
+    
   </script>
+{% if user.is_authenticated %}
+<script>
+function actualizarNotifs() {
+  fetch('{% url "notificaciones:count" %}')
+    .then(r => r.json())
+    .then(data => {
+      const el = document.getElementById('notif-count');
+
+      if (data.count > 0) {
+        el.textContent = data.count;
+        el.classList.remove('hidden');
+      } else {
+        el.classList.add('hidden');
+      }
+    });
+}
+
+actualizarNotifs();
+setInterval(actualizarNotifs, 30000);
+</script>
+{% endif %}
 </body>
 </html>

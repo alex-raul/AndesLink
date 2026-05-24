@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Mis pedidos — AndesLink{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-6">
+  <div class="flex items-center justify-between mb-5">
+    <h1 class="text-xl font-bold">Mis pedidos</h1>
+    <a href="/" class="text-sm text-andes-700 hover:underline">Seguir comprando →</a>
+  </div>
+
+  {% if ordenes %}
+  <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+        <tr>
+          <th class="px-4 py-3 text-left">Código</th>
+          <th class="px-4 py-3 text-left hidden md:table-cell">Fecha</th>
+          <th class="px-4 py-3 text-left hidden md:table-cell">Total</th>
+          <th class="px-4 py-3 text-left">Estado</th>
+          <th class="px-4 py-3 text-left"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for o in ordenes %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-3 font-mono font-bold">#{{ o.codigo }}</td>
+          <td class="px-4 py-3 text-gray-400 hidden md:table-cell">{{ o.creado_en|date:"d/m/Y" }}</td>
+          <td class="px-4 py-3 font-medium hidden md:table-cell">S/ {{ o.total }}</td>
+          <td class="px-4 py-3">
+            <span class="px-2 py-1 rounded-full text-xs font-medium
+              {% if o.estado == 'FINALIZADO' or o.estado == 'CONFIRMADO' %}bg-green-100 text-green-800
+              {% elif o.estado == 'RECHAZADO' or o.estado == 'DISPUTADO' %}bg-red-100 text-red-800
+              {% elif o.estado == 'EN_CAMINO' or o.estado == 'ACEPTADO' %}bg-blue-100 text-blue-800
+              {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+              {{ o.get_estado_display }}
+            </span>
+          </td>
+          <td class="px-4 py-3">
+            <a href="{% url 'orders:detalle' o.pk %}" class="text-andes-700 text-xs hover:underline">Ver →</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="text-center py-14 text-gray-400">
+    <div class="text-5xl mb-3">📦</div>
+    <p class="font-medium">Aún no tienes pedidos</p>
+    <a href="/" class="mt-2 inline-block text-andes-700 text-sm hover:underline">Explorar productos →</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
