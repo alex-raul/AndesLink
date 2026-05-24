@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}{{ productor.get_full_name }} — AndesLink{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+
+  <!-- Cabecera -->
+  <div class="bg-white rounded-2xl border border-gray-200 p-6 flex flex-col sm:flex-row items-center gap-5 mb-6">
+    {% if productor.foto %}
+      <img src="{{ productor.foto.url }}" alt="Foto"
+           class="w-24 h-24 rounded-full object-cover border-4 border-green-200">
+    {% else %}
+      <div class="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center text-4xl border-4 border-green-200">
+        👨‍🌾
+      </div>
+    {% endif %}
+    <div class="text-center sm:text-left">
+      <h1 class="text-2xl font-bold">{{ productor.get_full_name }}</h1>
+      <p class="text-sm text-gray-500 mt-0.5">Productor andino</p>
+      <div class="flex flex-wrap gap-2 mt-2 justify-center sm:justify-start">
+        {% if productor.departamento %}
+        <span class="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+          📍 {{ productor.departamento }}{% if productor.provincia %}, {{ productor.provincia }}{% endif %}
+        </span>
+        {% endif %}
+        {% if productor.telefono %}
+        <span class="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+          📞 {{ productor.telefono }}
+        </span>
+        {% endif %}
+        <span class="text-xs px-3 py-1 rounded-full
+          {% if productor.estado_verificacion == 'VERIFICADO' %}bg-green-100 text-green-700
+          {% else %}bg-gray-100 text-gray-500{% endif %}">
+          {% if productor.estado_verificacion == 'VERIFICADO' %}✓ Verificado{% else %}Pendiente verificación{% endif %}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Productos del productor -->
+  <h2 class="text-lg font-bold mb-4">
+    Productos disponibles
+    <span class="text-sm font-normal text-gray-400">({{ productos|length }})</span>
+  </h2>
+
+  {% if productos %}
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+    {% for p in productos %}
+    <a href="{% url 'marketplace:detalle' p.pk %}"
+       class="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition group">
+      {% if p.imagen %}
+        <img src="{{ p.imagen.url }}" alt="{{ p.nombre }}"
+             class="w-full h-32 object-cover group-hover:scale-105 transition duration-300">
+      {% else %}
+        <div class="w-full h-32 bg-green-50 flex items-center justify-center text-3xl">🌿</div>
+      {% endif %}
+      <div class="p-3">
+        <p class="font-semibold text-sm leading-tight">{{ p.nombre }}</p>
+        <p class="text-andes-700 font-bold mt-1">S/ {{ p.precio_unitario }}
+          <span class="text-gray-400 font-normal text-xs">/ {{ p.get_unidad_display }}</span>
+        </p>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-gray-400 text-center py-10">Este productor aún no tiene productos disponibles.</p>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -13,8 +13,9 @@ class RegistroForm(UserCreationForm):
     rol = forms.ChoiceField(
         label='Tipo de cuenta',
         choices=[
-            (Usuario.Rol.PRODUCTOR, 'Soy productor / agricultor'),
-            (Usuario.Rol.COMPRADOR, 'Soy comprador / empresa'),
+            (Usuario.Rol.PRODUCTOR, '🌾 Soy productor / agricultor'),
+            (Usuario.Rol.COMPRADOR, '🏢 Soy comprador / empresa'),
+            (Usuario.Rol.AGENTE,    '🧭 Soy agente andino'),
         ]
     )
 
@@ -25,3 +26,26 @@ class RegistroForm(UserCreationForm):
             'dni', 'telefono', 'departamento', 'rol',
             'password1', 'password2',
         ]
+
+
+class EditarPerfilForm(forms.ModelForm):
+    first_name = forms.CharField(label='Nombres', max_length=80)
+    last_name  = forms.CharField(label='Apellidos', max_length=80)
+    email      = forms.EmailField(label='Correo electrónico')
+
+    class Meta:
+        model  = Usuario
+        fields = [
+            'first_name', 'last_name', 'email',
+            'dni', 'telefono', 'departamento', 'provincia', 'foto',
+        ]
+        labels = {
+            'dni':         'DNI',
+            'telefono':    'Teléfono',
+            'departamento':'Departamento',
+            'provincia':   'Provincia',
+            'foto':        'Foto de perfil',
+        }
+        widgets = {
+            'foto': forms.FileInput(),
+        }

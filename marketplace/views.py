@@ -5,9 +5,8 @@ from .models import Producto, Categoria
 
 def home(request):
     categorias = Categoria.objects.all()
-    productos = Producto.objects.filter(estado='DISPONIBLE').select_related('productor', 'categoria')
+    productos  = Producto.objects.filter(estado='DISPONIBLE').select_related('productor', 'categoria')
 
-    # Búsqueda
     q = request.GET.get('q', '').strip()
     if q:
         productos = productos.filter(
@@ -16,14 +15,12 @@ def home(request):
             Q(departamento__icontains=q)
         )
 
-    # Filtro por categoría
     cat_id = request.GET.get('categoria')
     categoria_activa = None
     if cat_id:
         categoria_activa = get_object_or_404(Categoria, pk=cat_id)
         productos = productos.filter(categoria=categoria_activa)
 
-    # Filtro por departamento
     depto = request.GET.get('departamento', '').strip()
     if depto:
         productos = productos.filter(departamento__icontains=depto)
@@ -37,19 +34,27 @@ def home(request):
     )
 
     return render(request, 'marketplace/home.html', {
-        'productos': productos,
-        'categorias': categorias,
+        'productos':        productos,
+        'categorias':       categorias,
         'categoria_activa': categoria_activa,
-        'q': q,
-        'departamentos': departamentos,
-        'depto_activo': depto,
+        'q':                q,
+        'departamentos':    departamentos,
+        'depto_activo':     depto,
     })
 
 
 def detalle_producto(request, pk):
     producto = get_object_or_404(
         Producto.objects.select_related('productor', 'categoria'),
-        pk=pk,
-        estado='DISPONIBLE'
+        pk=pk
     )
-    return render(request, 'marketplace/detalle.html', {'producto': producto})
+    # Otros productos del mismo productor
+    otros = Producto.objects.filter(
+        productor=producto.productor,
+        estado='DISPONIBLE'
+    ).exclude(pk=pk)[:4]
+
+    return render(request, 'marketplace/detalle.html', {
+        'producto': producto,
+        'otros':    otros,
+    })

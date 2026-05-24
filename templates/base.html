@@ -29,14 +29,32 @@
       <div class="hidden md:flex items-center gap-6 text-sm font-medium">
         <a href="/" class="hover:text-green-200 transition">Marketplace</a>
         {% if user.is_authenticated %}
-          {% if user.es_productor %}
-            <a href="{% url 'productor:dashboard' %}" class="hover:text-green-200">Mi panel</a>
-          {% endif %}
-          <span class="text-green-300">{{ user.get_full_name }}</span>
-          <a href="{% url 'accounts:logout' %}" class="bg-white text-andes-700 px-3 py-1 rounded-full text-xs font-semibold hover:bg-green-100">Salir</a>
-        {% else %}
-          <a href="{% url 'accounts:login' %}" class="hover:text-green-200">Ingresar</a>
-          <a href="{% url 'accounts:registro' %}" class="bg-white text-andes-700 px-3 py-1 rounded-full text-xs font-semibold hover:bg-green-100">Registrarse</a>
+            {% if user.es_productor %}
+                <a href="{% url 'productor:dashboard' %}" class="hover:text-green-200">Mi panel</a>
+            {% elif user.es_comprador %}
+                <a href="{% url 'comprador:dashboard' %}" class="hover:text-green-200">Mis solicitudes</a>
+            {% elif user.es_agente %}
+                <a href="{% url 'agente:dashboard' %}" class="hover:text-green-200">Panel agente</a>
+            {% endif %}
+            <!-- Avatar con nombre clickeable -->
+            <a href="{% url 'accounts:perfil' %}" class="flex items-center gap-2 hover:text-green-200">
+                {% if user.foto %}
+                <img src="{{ user.foto.url }}" class="w-7 h-7 rounded-full object-cover border border-green-300">
+                {% else %}
+                <span class="w-7 h-7 rounded-full bg-green-600 flex items-center justify-center text-xs font-bold border border-green-300">
+                    {{ user.first_name|first|upper }}
+                </span>
+                {% endif %}
+                <span class="text-sm">{{ user.first_name }}</span>
+            </a>
+            <a href="{% url 'accounts:logout' %}" class="bg-white text-andes-700 px-3 py-1 rounded-full text-xs font-semibold hover:bg-green-100">
+                Salir
+            </a>
+            {% else %}
+            <a href="{% url 'accounts:login' %}" class="hover:text-green-200">Ingresar</a>
+            <a href="{% url 'accounts:registro' %}" class="bg-white text-andes-700 px-3 py-1 rounded-full text-xs font-semibold hover:bg-green-100">
+                Registrarse
+            </a>
         {% endif %}
       </div>
       <!-- Menú móvil (hamburguesa simple) -->
@@ -46,14 +64,19 @@
     <div id="mobile-menu" class="hidden md:hidden bg-andes-900 px-4 pb-3 text-sm font-medium space-y-2">
       <a href="/" class="block py-1 hover:text-green-300">Marketplace</a>
       {% if user.is_authenticated %}
+        <a href="{% url 'accounts:perfil' %}" class="block py-1 hover:text-green-300">Mi perfil</a>
         {% if user.es_productor %}
-          <a href="{% url 'productor:dashboard' %}" class="block py-1 hover:text-green-300">Mi panel</a>
+            <a href="{% url 'productor:dashboard' %}" class="block py-1 hover:text-green-300">Mi panel</a>
+        {% elif user.es_comprador %}
+            <a href="{% url 'comprador:dashboard' %}" class="block py-1 hover:text-green-300">Mis solicitudes</a>
+        {% elif user.es_agente %}
+            <a href="{% url 'agente:dashboard' %}" class="block py-1 hover:text-green-300">Panel agente</a>
         {% endif %}
         <a href="{% url 'accounts:logout' %}" class="block py-1 hover:text-green-300">Salir</a>
-      {% else %}
+        {% else %}
         <a href="{% url 'accounts:login' %}" class="block py-1 hover:text-green-300">Ingresar</a>
         <a href="{% url 'accounts:registro' %}" class="block py-1 hover:text-green-300">Registrarse</a>
-      {% endif %}
+        {% endif %}
     </div>
   </nav>
 

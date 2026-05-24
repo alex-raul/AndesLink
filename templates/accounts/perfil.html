@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}Mi perfil — AndesLink{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-8">
+
+  <!-- Cabecera perfil -->
+  <div class="bg-white rounded-2xl border border-gray-200 p-6 flex flex-col sm:flex-row items-center gap-5 mb-5">
+    {% if usuario.foto %}
+      <img src="{{ usuario.foto.url }}" alt="Foto"
+           class="w-24 h-24 rounded-full object-cover border-4 border-green-200">
+    {% else %}
+      <div class="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center text-4xl border-4 border-green-200">
+        👤
+      </div>
+    {% endif %}
+    <div class="text-center sm:text-left flex-1">
+      <h1 class="text-xl font-bold">{{ usuario.get_full_name }}</h1>
+      <p class="text-sm text-gray-500">@{{ usuario.username }}</p>
+      <span class="inline-block mt-1 px-3 py-0.5 rounded-full text-xs font-medium
+        {% if usuario.rol == 'PRODUCTOR' %}bg-green-100 text-green-700
+        {% elif usuario.rol == 'COMPRADOR' %}bg-blue-100 text-blue-700
+        {% else %}bg-yellow-100 text-yellow-700{% endif %}">
+        {{ usuario.get_rol_display }}
+      </span>
+      <span class="ml-2 inline-block px-3 py-0.5 rounded-full text-xs font-medium
+        {% if usuario.estado_verificacion == 'VERIFICADO' %}bg-green-100 text-green-700
+        {% elif usuario.estado_verificacion == 'SUSPENDIDO' %}bg-red-100 text-red-700
+        {% else %}bg-gray-100 text-gray-500{% endif %}">
+        {{ usuario.get_estado_verificacion_display }}
+      </span>
+    </div>
+    <a href="{% url 'accounts:editar_perfil' %}"
+       class="bg-andes-700 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-andes-900 transition">
+      Editar perfil
+    </a>
+  </div>
+
+  <!-- Datos personales -->
+  <div class="bg-white rounded-2xl border border-gray-200 p-6 mb-5">
+    <h2 class="text-base font-semibold mb-4">Datos personales</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+      <div>
+        <p class="text-gray-400 text-xs mb-0.5">Correo electrónico</p>
+        <p class="font-medium">{{ usuario.email|default:"—" }}</p>
+      </div>
+      <div>
+        <p class="text-gray-400 text-xs mb-0.5">DNI</p>
+        <p class="font-medium">{{ usuario.dni|default:"—" }}</p>
+      </div>
+      <div>
+        <p class="text-gray-400 text-xs mb-0.5">Teléfono</p>
+        <p class="font-medium">{{ usuario.telefono|default:"—" }}</p>
+      </div>
+      <div>
+        <p class="text-gray-400 text-xs mb-0.5">Departamento</p>
+        <p class="font-medium">{{ usuario.departamento|default:"—" }}</p>
+      </div>
+      <div>
+        <p class="text-gray-400 text-xs mb-0.5">Provincia</p>
+        <p class="font-medium">{{ usuario.provincia|default:"—" }}</p>
+      </div>
+      <div>
+        <p class="text-gray-400 text-xs mb-0.5">Miembro desde</p>
+        <p class="font-medium">{{ usuario.date_joined|date:"d/m/Y" }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Acceso rápido según rol -->
+  {% if usuario.es_productor %}
+  <div class="bg-green-50 rounded-2xl border border-green-200 p-5 flex items-center justify-between">
+    <div>
+      <p class="font-semibold text-green-800">Panel de productor</p>
+      <p class="text-xs text-green-600">Gestiona tus productos publicados</p>
+    </div>
+    <a href="{% url 'productor:dashboard' %}"
+       class="bg-andes-700 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-andes-900 transition">
+      Ir al panel
+    </a>
+  </div>
+  {% elif usuario.es_comprador %}
+  <div class="bg-blue-50 rounded-2xl border border-blue-200 p-5 flex items-center justify-between">
+    <div>
+      <p class="font-semibold text-blue-800">Mis solicitudes</p>
+      <p class="text-xs text-blue-600">Revisa el estado de tus contactos</p>
+    </div>
+    <a href="{% url 'comprador:dashboard' %}"
+       class="bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-900 transition">
+      Ver solicitudes
+    </a>
+  </div>
+  {% elif usuario.es_agente %}
+  <div class="bg-yellow-50 rounded-2xl border border-yellow-200 p-5 flex items-center justify-between">
+    <div>
+      <p class="font-semibold text-yellow-800">Panel de agente</p>
+      <p class="text-xs text-yellow-600">Gestiona tus productores asignados</p>
+    </div>
+    <a href="{% url 'agente:dashboard' %}"
+       class="bg-yellow-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-yellow-800 transition">
+      Ir al panel
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
